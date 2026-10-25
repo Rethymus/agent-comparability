@@ -1,0 +1,11 @@
+Agent Comparability
+Copyright 2026 Agent Comparability contributors
+
+This product includes software developed as part of the Agent Comparability
+project (specification cmp/0.3.1 and reference implementation).
+
+Optional integrations (NOT bundled in this distribution):
+- inspect-ai (MIT) — https://inspect.aisi.org.uk
+- pydantic-evals (MIT) — https://pydantic.dev
+Conformance case data is original to this project.
+This distribution contains NO CC BY-NC licensed data.

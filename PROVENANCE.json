@@ -1,0 +1,62 @@
+{
+  "dist_version": "0.3.1",
+  "source_repo_commit": "c7520bf0ecc1ed9aca8e83433203f985892d1ce7",
+  "note": "发行树全新 git 历史；本文件仅为溯源映射。发行版自包含，不依赖研究仓库。",
+  "files": [
+    {
+      "dist": "src/agent_comparability/__init__.py",
+      "source": "(生成)",
+      "src_sha256_16": null
+    },
+    {
+      "dist": "src/agent_comparability/core.py",
+      "source": "scripts/cmp/core.py",
+      "src_sha256_16": "6271989f37feb938"
+    },
+    {
+      "dist": "src/agent_comparability/py.typed",
+      "source": "(生成)",
+      "src_sha256_16": null
+    },
+    {
+      "dist": "spec/SPEC.md",
+      "source": "release/SPEC.md",
+      "src_sha256_16": "4543b5b18cb424d8"
+    },
+    {
+      "dist": "spec/cdr.schema.json",
+      "source": "release/cdr.schema.json",
+      "src_sha256_16": "c5d70b0b3fbca652"
+    },
+    {
+      "dist": "conformance/boundary-cases.json",
+      "source": "release/conformance/boundary-cases.json",
+      "src_sha256_16": "c839814e2ef98f2c"
+    },
+    {
+      "dist": "conformance/independent_impl.py",
+      "source": "release/conformance/independent_impl.py",
+      "src_sha256_16": "3e7e46818d8c5209"
+    },
+    {
+      "dist": "conformance/run_suite.py",
+      "source": "release/conformance/run_suite.py",
+      "src_sha256_16": "4ecf549c69346631"
+    },
+    {
+      "dist": "conformance/frozen-cases-a.json",
+      "source": "experiments/conformance-001/frozen-cases.json",
+      "src_sha256_16": "af24087cae764c84"
+    },
+    {
+      "dist": "adapters/inspect_adapter.py",
+      "source": "scripts/cmp/run_conformance.py",
+      "src_sha256_16": "b0bb97c35a406914"
+    },
+    {
+      "dist": "adapters/pydantic_adapter.py",
+      "source": "scripts/cmp/run_pydantic_route.py",
+      "src_sha256_16": "bc71bec6679db2c9"
+    }
+  ]
+}
