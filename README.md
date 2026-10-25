@@ -1,4 +1,9 @@
-# Agent Comparability
+# Agent Comparability — Experimental Specification & Conformance Suite
+
+> **Positioning (frozen, v0.3.6):** 面向异构 Agent 评测结果的可比较性**实验性规范与一致性测试套件**。
+> It specifies what evaluation evidence supports which comparison conclusions, and prevents
+> semantic drift across frameworks via conformance tests. It is NOT a full reliability
+> management platform, and makes no reliability claims about any agent.
 
 **When can you compare AI agent evaluation results — and what claims do they support?**
 
