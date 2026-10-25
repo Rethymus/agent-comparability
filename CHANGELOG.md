@@ -3,6 +3,11 @@
 All versions immutable once tagged. v0.3.1–v0.3.6 are **deprecated candidates**
 kept for the record (each superseded for a verified defect; see git history notes).
 
+## v0.4.1 (2026-10-25)
+- Gate fixes proven by negative tests: terminal-scan pattern widened (`from cmp.core`
+evaded trailing-space match), run_suite exit-code now propagates failures (was
+always 0 — CI stayed green on failed verdicts)
+
 ## v0.4.0 (2026-10-25)
 - Repository hardening: build artifacts untracked, process reports archived to
   `docs/internal/`, redundant QUICKSTART merged into README
