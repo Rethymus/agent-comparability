@@ -1,4 +1,4 @@
-"""独立最小实现：仅依 release/SPEC.md（cmp/0.3 规范）编写，未参考 scripts/cmp/core.py 源码。
+"""独立最小实现：仅依 release/SPEC.md（cmp/0.3 规范）编写，未参考 src/agent_comparability/core.py 源码。
 
 作者注（隔离声明）：本实现按规范 §3.2 条件顺序与 §3.3 判定表从零翻译；
 §5 未知字段/未支持 claim 规则、B5 的保守尺度规则均来自规范文本。

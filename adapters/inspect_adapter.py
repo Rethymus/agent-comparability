@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from agent_comparability import adjudicate, POLICY_VERSION  # 路 1 参考实现
 
-OUT = ROOT / "experiments/conformance-001"
+OUT = ROOT / "conformance"
 
 # ---------- 冻结案例 + 预注册参考判定（先冻结后运行；v2 六项语义修正版） ----------
 CASES = [
@@ -161,7 +161,7 @@ def main() -> int:
             base_match += 1
 
     # LOC/依赖实测
-    core_loc = len((ROOT / "scripts/cmp/core.py").read_text(encoding="utf-8").splitlines())
+    core_loc = len((ROOT / "src/agent_comparability/core.py").read_text(encoding="utf-8").splitlines())
     baseline_loc = len(inspect_only_baseline.__code__.co_code) and sum(
         1 for _ in open(__file__, encoding="utf-8"))  # 粗计：本文件基线段
     report = {"policy_version": POLICY_VERSION,

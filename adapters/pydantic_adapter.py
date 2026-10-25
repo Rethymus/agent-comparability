@@ -16,7 +16,7 @@ from agent_comparability import adjudicate, POLICY_VERSION  # 同一核心判断
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import Evaluator, EvaluatorContext
 
-OUT = ROOT / "experiments/conformance-001"
+OUT = ROOT / "conformance"
 
 # 冻结案例（与 run_conformance.CASES 完全同源；从模块导入保证一致）
 from inspect_adapter import CASES, FROZEN
