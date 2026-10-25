@@ -23,8 +23,10 @@ jobs:
         run: python conformance/check_docs.py
       - name: Conformance suite (three separated metrics)
         run: python conformance/run_suite.py
-      - name: Tests (smoke + properties)
+      - name: Tests (smoke + properties + gate regressions N1-N4)
         run: python -m pytest tests/ -q
+      - name: Release version-consistency gate
+        run: python conformance/release_gate.py
       - name: Build + twine check
         run: |
           pip install build twine -q
