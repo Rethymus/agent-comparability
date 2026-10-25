@@ -108,12 +108,17 @@ def main() -> int:
     OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     brief = {k: (v["passed"] if isinstance(v, dict) and "passed" in v else v) for k, v in result.items() if k != "metrics_separated"}
     print(json.dumps(brief, ensure_ascii=False, indent=1))
-    # 失败明细
+    # 失败明细 + 退出码传导（负向门禁 N2 发现：此前恒 return 0，CI 无法察觉判定失败）
+    any_fail = core_pass != len(pairs) or indep_pass != len(pairs)
     for m in ("metric3_policy_correctness", "metric2_spec_conformance"):
         fails = [r for r in result[m]["rows"] if not r["ok"]]
         if fails:
             print(f"\n{m} 失败:", [(r["case"], r["claim"], r["got"], "expect=" + r["expected"]) for r in fails])
-    return 0
+    if integ_rows and not all(r.get("ok") for r in integ_rows):
+        any_fail = True
+    if schema_fail:
+        any_fail = True
+    return 1 if any_fail else 0
 
 
 if __name__ == "__main__":
