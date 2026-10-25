@@ -3,6 +3,15 @@
 All versions immutable once tagged. v0.3.1–v0.3.6 are **deprecated candidates**
 kept for the record (each superseded for a verified defect; see git history notes).
 
+## v0.5.0 (2026-10-25)
+- **Version identity unified**: tag v0.5.0 == pyproject == `__version__` == package
+  metadata (v0.4.1 carried 0.4.0 inside — recorded as historical candidate defect,
+  tag untouched). New `conformance/release_gate.py` enforces this on every CI run.
+- Negative gates N1–N4 converted to permanent regression tests
+  (`tests/test_gate_regressions.py`, original failure record preserved in VALIDATION.md
+  and fix commits ad14fb5/541494d). Terminal scan gained an AST-based structured
+  companion (N1b) instead of expanding string rules; documented self-exclusions.
+
 ## v0.4.1 (2026-10-25)
 - Gate fixes proven by negative tests: terminal-scan pattern widened (`from cmp.core`
 evaded trailing-space match), run_suite exit-code now propagates failures (was
