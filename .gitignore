@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+dist/
+conformance-results.json
+.pytest_cache/
