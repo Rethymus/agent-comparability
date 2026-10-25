@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT / "adapters"))
 from inspect_adapter import CASES as A_CASES  # noqa
 B = json.loads((ROOT / "conformance/boundary-cases.json").read_text(encoding="utf-8"))
 
-import cmp.core as core  # 参考实现（策略正确性受检对象）
+from agent_comparability import core
 import independent_impl as indep  # 独立实现（规范一致性受检对象）
 
 
