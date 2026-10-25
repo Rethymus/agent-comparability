@@ -1,0 +1,10 @@
+
+[inspect]
+inspect-ai
+
+[pydantic]
+pydantic-evals
+
+[suite]
+pyyaml
+jsonschema

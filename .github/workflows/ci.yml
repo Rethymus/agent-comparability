@@ -1,0 +1,22 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -e .[suite]
+      - name: Terminal scan (self-containment gate)
+        run: python - <<'PY'
+        from pathlib import Path
+        bad = [f"{f}:{p}" for f in Path(".").rglob("*.py") if "__pycache__" not in str(f)
+               for p in ["import cmp ", "from cmp ", "from arlib", '"scripts/', '"experiments/']
+               if p in f.read_text(encoding="utf-8", errors="ignore")]
+        assert not bad, bad
+        PY
+      - name: Conformance (three separated metrics, each must pass)
+        run: python conformance/run_suite.py
+      - name: Smoke tests
+        run: pip install pytest -q && pytest tests/ -q
