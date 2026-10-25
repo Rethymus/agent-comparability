@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
 dist/
+build/
+*.egg-info/
 conformance-results.json
 .pytest_cache/
