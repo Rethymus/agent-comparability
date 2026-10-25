@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-BAD = ["import cmp ", "from cmp ", "from arlib", "import arlib", '"scripts/', '"experiments/']
+BAD = ["import cmp", "from cmp", "from arlib", "import arlib", '"scripts/', '"experiments/']
 hits = [f"{f}:{p}" for f in Path(".").rglob("*.py")
         if "__pycache__" not in str(f) and ".git" not in str(f) and f.name != "terminal_scan.py"
         for p in BAD if p in f.read_text(encoding="utf-8", errors="ignore")]
