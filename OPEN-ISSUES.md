@@ -2,7 +2,7 @@
 
 | # | 项 | 状态 | 说明 |
 |---|---|---|---|
-| O1 | GitHub 默认分支切换（release→main） | **BLOCKED-ON-OWNER** | 远程默认分支变更需所有者批准；命令已备好：`gh repo edit Rethymus/agent-comparability --default-branch main`。main 已推送且 CI 绿（run 40188394885），切换零技术风险 |
+| O1 | GitHub 默认分支切换（release→main） | **FIXED（已执行并核实）** | 所有者授权后执行 `gh repo edit --default-branch main`；API 复核 defaultBranchRef.name = main |
 | O2 | 远程 master 分支处置 | DEFERRED | 含旧 dist 二进制的 2 独有提交；建议所有者确认无用后由其删除（我不删远程分支） |
 | O3 | v0.4.1 tag 内 pyproject 版本为 0.4.0 | PARTIAL（已知余差） | tag 命名序列与包版本出现 1 位微差；不影响安装/一致性行为；下一版本对齐（0.5.0/`v0.5.0`）。诚实记录而非移动 tag |
 | O4 | GitHub Topics / License 自动识别 | NOT_VERIFIED | 远程元数据变更与 GitHub 重扫待默认分支切换后一并处理 |
