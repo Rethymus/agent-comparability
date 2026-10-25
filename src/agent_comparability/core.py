@@ -67,7 +67,8 @@ def adjudicate(case: dict, requested_claim: str) -> CDR:
     if "unresolved_zero" in statuses and "verified" in statuses:
         cdr.violated_conditions.append("zero_semantics_uniform(verified_zero != unresolved_zero)")
     scales = [_effective_scale(r) for r in recs]
-    if multi and (None in scales or len(set(scales)) > 1):
+    if (multi and (None in scales or len(set(scales)) > 1)) or None in scales:
+        # 值越界且未声明尺度（单记录同样不构成可比较尺度）——SPEC 0.3.1 隐式默认规则
         cdr.violated_conditions.append("score_scale_consistent")
     else:
         base = scales[0] if scales else tuple(sorted(DEFAULT_SCALE.items()))
