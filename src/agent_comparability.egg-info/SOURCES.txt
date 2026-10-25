@@ -10,4 +10,8 @@ src/agent_comparability.egg-info/SOURCES.txt
 src/agent_comparability.egg-info/dependency_links.txt
 src/agent_comparability.egg-info/requires.txt
 src/agent_comparability.egg-info/top_level.txt
+src/agent_comparability/data/SPEC.md
+src/agent_comparability/data/boundary-cases.json
+src/agent_comparability/data/cdr.schema.json
+src/agent_comparability/data/frozen-cases-a.json
 tests/test_smoke.py

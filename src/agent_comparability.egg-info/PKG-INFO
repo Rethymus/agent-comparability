@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: agent-comparability
-Version: 0.3.2
+Version: 0.3.6
 Summary: Agent evaluation comparability semantics: spec + conformance suite + thin reference implementation
 License: Apache-2.0
 Requires-Python: >=3.10

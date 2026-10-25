@@ -37,3 +37,18 @@ Not a benchmark, not an agent runner, not an accuracy metric. See SPEC §7: the 
 conformance metrics (integration / spec / policy) must never be merged into one number.
 
 License: Apache-2.0 (see NOTICE). Conformance cases are original data.
+
+
+## Versioning
+
+Three version lines, deliberately distinct:
+- **Git tag / PyPI package**: `v0.3.6` (release artifact lineage; intermediate tags
+  v0.3.1–v0.3.5 are deprecated candidates — see git history notes for why each
+  was superseded: missing LICENSE fix, non-runnable suite snapshot, adapter path
+  residues, missing packaged assets)
+- **Specification**: `cmp/0.3.1` (in `spec/SPEC.md`; unchanged through these
+  release candidates — semantic stability verified by the frozen conformance set)
+- **Python API**: `agent_comparability.__version__`
+
+This is an **Experimental Specification** — self-tested conformance, no external
+certification, and it makes no claims about any agent's reliability.

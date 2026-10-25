@@ -1,0 +1,51 @@
+{
+  "policy_version": "cmp/0.2.0",
+  "frozen_note": "案例与参考判定先于三路运行冻结",
+  "cases": [
+    {
+      "id": "C1",
+      "category": "same-task-same-model-diff-harness",
+      "expected_admissibility_by_claim": {
+        "score_compare": "ADMISSIBLE",
+        "causal": "INADMISSIBLE"
+      }
+    },
+    {
+      "id": "C2",
+      "category": "same-task-diff-model-diff-harness",
+      "expected_admissibility_by_claim": {
+        "score_compare": "INADMISSIBLE",
+        "record": "ADMISSIBLE"
+      }
+    },
+    {
+      "id": "C3",
+      "category": "verified-vs-unresolved-zero",
+      "expected_admissibility_by_claim": {
+        "score_compare": "PARTIAL"
+      }
+    },
+    {
+      "id": "C4",
+      "category": "missing-trace",
+      "expected_admissibility_by_claim": {
+        "score_compare": "INCONCLUSIVE",
+        "record": "ADMISSIBLE"
+      }
+    },
+    {
+      "id": "C5",
+      "category": "score-scale-variation",
+      "expected_admissibility_by_claim": {
+        "score_compare": "ADMISSIBLE"
+      }
+    },
+    {
+      "id": "C6",
+      "category": "provenance-binding",
+      "expected_admissibility_by_claim": {
+        "record": "ADMISSIBLE"
+      }
+    }
+  ]
+}
