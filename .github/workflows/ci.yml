@@ -6,19 +6,24 @@ jobs:
   conformance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3d # v4.1.0 pinned
-      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0 pinned
-        with: {python-version: "3.12"}
-      - run: pip install -e .[suite]
+      - name: Checkout (pinned v4.1.0)
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3d
+      - name: Setup Python (pinned v5.3.0)
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e .[suite]
       - name: Terminal scan (self-containment gate)
-        run: python - <<'PY'
-        from pathlib import Path
-        bad = [f"{f}:{p}" for f in Path(".").rglob("*.py") if "__pycache__" not in str(f)
-               for p in ["import cmp ", "from cmp ", "from arlib", '"scripts/', '"experiments/']
-               if p in f.read_text(encoding="utf-8", errors="ignore")]
-        assert not bad, bad
-        PY
-      - name: Conformance (three separated metrics, each must pass)
+        run: python conformance/terminal_scan.py
+      - name: Conformance suite (three separated metrics)
         run: python conformance/run_suite.py
       - name: Smoke tests
-        run: pip install pytest -q && pytest tests/ -q
+        run: |
+          pip install pytest -q
+          pytest tests/ -q
+      - name: Build + twine check
+        run: |
+          pip install build twine -q
+          python -m build --sdist --wheel -o dist .
+          python -m twine check dist/*
