@@ -252,6 +252,9 @@ pip install -e .[pydantic] && python adapters/pydantic_adapter.py
 
 Both wrap the *same* core (no semantic duplication). Inspect scorer uses
 `metrics=[]` — admissibility is deliberately **not** aggregated into accuracy.
+The Pydantic evaluator checks the **task's real output** (`ctx.output`) against
+frozen expectations — it never re-adjudicates inside the evaluator — and the
+adapter's exit code derives from the full 22-pair `report` (cases + failures).
 
 ## 12. Specification & Versioning
 
