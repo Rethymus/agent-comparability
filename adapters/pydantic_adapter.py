@@ -19,7 +19,9 @@ from pydantic_evals.evaluators import Evaluator, EvaluatorContext
 OUT = ROOT / "conformance"
 
 # 冻结案例（与 run_conformance.CASES 完全同源；从模块导入保证一致）
-from inspect_adapter import CASES, FROZEN
+from inspect_adapter import CASES, FROZEN  # A 集（兼容保留）
+sys.path.insert(0, str(ROOT / "conformance"))
+import cases as shared_cases  # 共享加载器（A+B 全 22 对）
 
 
 class CDRAdjudicator(Evaluator):
@@ -38,11 +40,12 @@ class CDRAdjudicator(Evaluator):
 
 
 def main() -> int:
+    # 共享加载器（A+B 全 22 对）——与 run_suite/inspect 路线同覆盖面
     cases_flat = []
-    for c in CASES:
-        for claim, expected in c["claims"].items():
-            cases_flat.append(Case(name=f"{c['id']}:{claim}",
-                                   inputs=(c, claim), expected_output=expected))
+    for cid, claim, expected, recs in shared_cases.all_pairs():
+        cases_flat.append(Case(name=f"{cid}:{claim}",
+                               inputs=({"id": cid, "records": recs}, claim),
+                               expected_output=expected))
     ds = Dataset(name="cmp-conformance-pydantic-route", cases=cases_flat,
                  evaluators=[CDRAdjudicator()])
     report = ds.evaluate_sync(task=lambda inputs: adjudicate(*inputs).admissibility,

@@ -73,7 +73,7 @@ def test_N3_N4_doc_gate_blocks_bad_link_and_fake_pip():
     tmp = _copy_tree()
     zh = tmp / "README.zh-CN.md"
     zh.write_text(zh.read_text(encoding="utf-8").replace(
-        "pip install -e .            # 核心，零依赖", "pip install agent-comparability"), encoding="utf-8")
+        "pip install -e .                        # 最小核心，零依赖", "pip install agent-comparability"), encoding="utf-8")
     r = _run(tmp, "conformance/check_docs.py")
     shutil.rmtree(tmp, ignore_errors=True)
     assert r.returncode != 0, "docs 门禁未拦截假 pip 命令（N4 回归）"

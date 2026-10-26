@@ -57,17 +57,19 @@ def main() -> int:
                            "expected": expected, "ok": out["admissibility"] == expected})
     indep_pass = sum(r["ok"] for r in indep_rows)
 
-    # --- 指标 1：集成一致性（core 的 CDR 经 Inspect/Pydantic 路线输出一致；用 A 集 + B 集抽样）---
-    integ_rows = []
+    # --- 指标 1：集成一致性（core 的 CDR 经 Inspect / Pydantic 两条路线分别全量核对）---
+    # 两条路线共用同一 22 对案例（cases.py 加载器）；分别报告执行数/通过数/失败原因。
+    integ_rows, pyd_rows = [], []
+    inspect_executed = pydantic_executed = False
+    inspect_err = pyd_err = None
     try:
+        import asyncio
+        from inspect_ai.scorer import Target
+        from inspect_adapter import inspect_adapter
+        scorer_obj = inspect_adapter()()
+        score_fn = scorer_obj.score if hasattr(scorer_obj, "score") else scorer_obj
         for cid, claim, expected, recs in pairs:
             cdr_direct = core.adjudicate({"id": cid, "records": recs}, claim).to_dict()
-            # Inspect 路线（复用 run_conformance 的适配器）
-            import asyncio
-            from inspect_ai.scorer import Target
-            from inspect_adapter import inspect_adapter
-            scorer_obj = inspect_adapter()()
-            score_fn = scorer_obj.score if hasattr(scorer_obj, "score") else scorer_obj
 
             class S:
                 metadata = {"cmp_case": {"id": cid, "records": recs}, "requested_claim": claim}
@@ -79,10 +81,42 @@ def main() -> int:
             integ_rows.append({"case": cid, "claim": claim,
                                "direct": cdr_direct["admissibility"], "inspect": sc.value,
                                "ok": sc.value == cdr_direct["admissibility"]})
-        integ_pass = sum(r["ok"] for r in integ_rows)
-        pyd_same = "见 route2b 机制（同一 core，机制等价）"
+        inspect_executed = True
     except Exception as e:
-        integ_pass, pyd_same = None, f"inspect 路线异常: {type(e).__name__}"
+        inspect_err = f"{type(e).__name__}: {e}"
+    try:
+        # Pydantic 路线：真实 Dataset/Case/Evaluator 机制逐对执行（与 adapters/pydantic_adapter 同机制）
+        from pydantic_evals import Case, Dataset
+        from pydantic_evals.evaluators import Evaluator, EvaluatorContext
+
+        class CDRParity(Evaluator):
+            def evaluate(self, ctx: EvaluatorContext) -> float:
+                cdr = core.adjudicate(*ctx.inputs)
+                return 1.0 if cdr.admissibility == ctx.expected_output else 0.0
+
+        ds = Dataset(name="metric1-pydantic",
+                     cases=[Case(name=f"{cid}:{claim}", inputs=({"id": cid, "records": recs}, claim),
+                                 expected_output=expected)
+                            for cid, claim, expected, recs in pairs],
+                     evaluators=[CDRParity()])
+        rep = ds.evaluate_sync(task=lambda inputs: core.adjudicate(*inputs).admissibility,
+                               progress=False)
+        for c in rep.cases:
+            score = next(iter(c.scores.values())).value
+            cid, _, claim = c.name.partition(":")
+            pyd_rows.append({"case": cid, "claim": claim, "ok": score == 1.0})
+        pydantic_executed = True
+    except Exception as e:
+        pyd_err = f"{type(e).__name__}: {e}"
+
+    integ_pass = sum(r["ok"] for r in integ_rows) if inspect_executed else None
+    pyd_pass = sum(r["ok"] for r in pyd_rows) if pydantic_executed else None
+    integration = {
+        "inspect": {"executed": inspect_executed, "passed": f"{integ_pass}/{len(pairs)}" if inspect_executed else None,
+                    "rows": integ_rows, "error": inspect_err},
+        "pydantic": {"executed": pydantic_executed, "passed": f"{pyd_pass}/{len(pairs)}" if pydantic_executed else None,
+                     "rows": pyd_rows, "error": pyd_err},
+    }
 
     # --- CDR schema 真实校验（全部 22 个判定输出都必须过 cdr-0.3.1 schema）---
     from jsonschema import Draft202012Validator
@@ -100,13 +134,15 @@ def main() -> int:
         "metrics_separated": True,
         "metric3_policy_correctness": {"passed": f"{core_pass}/{len(pairs)}", "rows": core_rows},
         "metric2_spec_conformance": {"passed": f"{indep_pass}/{len(pairs)}", "rows": indep_rows},
-        "metric1_integration_consistency": {"passed": f"{integ_pass}/{len(integ_rows)}" if integ_pass is not None else None,
-                                            "rows": integ_rows, "pydantic": pyd_same},
+        "metric1_integration_consistency": integration,
         "cdr_schema_probe": schema_probe,
         "case_sets": {"A(参与过调试,既有)": 9, "B(新边界,未参与调试)": len(pairs) - 9},
     }
     OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    brief = {k: (v["passed"] if isinstance(v, dict) and "passed" in v else v) for k, v in result.items() if k != "metrics_separated"}
+    brief = {k: (v["passed"] if isinstance(v, dict) and "passed" in v else v) for k, v in result.items()
+             if k not in ("metrics_separated", "metric1_integration_consistency")}
+    brief["metric1_integration_consistency"] = {
+        "inspect": integration["inspect"]["passed"], "pydantic": integration["pydantic"]["passed"]}
     print(json.dumps(brief, ensure_ascii=False, indent=1))
     # 失败明细 + 退出码传导（负向门禁 N2 发现：此前恒 return 0，CI 无法察觉判定失败）
     any_fail = core_pass != len(pairs) or indep_pass != len(pairs)
@@ -114,11 +150,13 @@ def main() -> int:
         fails = [r for r in result[m]["rows"] if not r["ok"]]
         if fails:
             print(f"\n{m} 失败:", [(r["case"], r["claim"], r["got"], "expect=" + r["expected"]) for r in fails])
-    if integ_pass is None or not integ_rows:
-        # 集成指标未执行（依赖缺失/适配器异常）不得静默计为通过——与 N2 同类风险
-        print("\nmetric1_integration_consistency 未执行（需安装 .[inspect] 与 .[pydantic]）——按 FAIL 处理")
+    if not integration["inspect"]["executed"] or not integration["pydantic"]["executed"]:
+        # 任一适配器未执行（依赖缺失/异常）不得静默计为通过——与 N2 同类风险
+        print("\nmetric1 集成路线未全部执行（需安装 .[inspect] 与 .[pydantic]）——按 FAIL 处理")
         any_fail = True
-    if integ_rows and not all(r.get("ok") for r in integ_rows):
+    if integ_pass is not None and integ_pass != len(pairs):
+        any_fail = True
+    if pyd_pass is not None and pyd_pass != len(pairs):
         any_fail = True
     if schema_fail:
         any_fail = True
