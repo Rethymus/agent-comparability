@@ -112,8 +112,9 @@ Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/
 
 ```bash
 git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
-pip install -e .            # 核心，零依赖
-pip install -e .[suite]     # + 一致性套件（pyyaml、jsonschema）
+pip install -e .                        # 最小核心，零依赖
+pip install -e .[suite]                 # + 套件基础（pyyaml、jsonschema）
+pip install -e .[suite,inspect,pydantic]  # 完整 Conformance 运行——run_suite.py 必需
 ```
 
 要求 Python ≥ 3.10。无需 Docker、无需模型密钥。
@@ -226,6 +227,8 @@ flowchart LR
 3. **集成一致性**——同一核心经 Inspect/Pydantic 适配器调用
 
 每个指标的失败对应不同缺陷类别（实现 bug / 规范歧义或误读 / 适配器 bug）。
+
+完整套件运行需要适配器扩展（`.[suite,inspect,pydantic]`）——适配器缺失按 FAIL 处理，不会静默跳过。
 
 ## 11. Inspect AI / Pydantic Evals 集成
 

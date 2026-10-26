@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- (#8) Install docs now distinguish minimal core / suite basics / FULL conformance
+  install (.[suite,inspect,pydantic]) — matching run_suite's adapter-required policy;
+  §10 notes missing-adapter→FAIL behavior (EN+zh)
+- (#8) Integration metric parity: shared case loader (conformance/cases.py, A+B 22
+  pairs) used by both routes; run_suite reports Inspect and Pydantic separately
+  (executed/passed/rows/error), textual placeholder removed; pydantic_adapter now
+  covers the full 22 pairs; dual-route not-executed gate negative-verified
 - README round 2: full real CDR JSON example (§8), mermaid adjudication
   flowchart (§9, GitHub-native render), admissibility quick-reference table (§3),
   tool-positioning table + audience line (§1), FAQ (6 Q&As), Project-status

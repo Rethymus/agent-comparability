@@ -122,8 +122,9 @@ From a clone (not yet on PyPI):
 
 ```bash
 git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
-pip install -e .            # core, zero deps
-pip install -e .[suite]     # + conformance suite (pyyaml, jsonschema)
+pip install -e .                        # minimal core, zero deps
+pip install -e .[suite]                 # + suite basics (pyyaml, jsonschema)
+pip install -e .[suite,inspect,pydantic]  # FULL conformance run — required by run_suite.py
 ```
 
 Requires Python ≥ 3.10. No Docker, no model keys.
@@ -239,6 +240,8 @@ never be merged:
 
 A failure in each means a different defect class (implementation bug / spec
 ambiguity or misread / adapter bug).
+
+The full suite run requires the adapter extras (`.[suite,inspect,pydantic]`) — a missing adapter is treated as FAIL, not skipped.
 
 ## 11. Inspect AI / Pydantic Evals Integrations
 
