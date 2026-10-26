@@ -1,29 +1,74 @@
 <div align="center">
 
-# Agent Comparability — Experimental Specification & Conformance Suite
+# Agent Comparability
 
-**When can you compare AI agent evaluation results — and what claims do they support?**
+**Experimental Specification & Conformance Suite** for AI agent evaluation comparability
+
+[![CI](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml/badge.svg)](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 
 **English** | [简体中文](README.zh-CN.md)
 
+*When can you compare AI agent evaluation results — and what claims do they support?*
+
 </div>
+
+---
+
+> [!IMPORTANT]
+> This project adjudicates **comparability of evaluation records** — it does **not** run
+> agents, score benchmarks, or certify any agent's reliability. Passing the conformance
+> suite means *specification* conformance, nothing more.
+
+**The 30-second path**: [Install](#6-installation) → [Quickstart](#7-quickstart) →
+[Real input/output](#8-inputoutput-example-actual-output).
+
+<details open>
+<summary><b>Table of Contents</b></summary>
+
+1. [Project Overview](#1-project-overview)
+2. [Problem & Motivation](#2-problem--motivation)
+3. [What Agent Comparability Does](#3-what-agent-comparability-does)
+4. [What It Does Not Do](#4-what-it-does-not-do)
+5. [Main Features](#5-main-features)
+6. [Installation](#6-installation)
+7. [Quickstart](#7-quickstart)
+8. [Input/Output Example (actual output)](#8-inputoutput-example-actual-output)
+9. [Architecture](#9-architecture)
+10. [Conformance Suite](#10-conformance-suite)
+11. [Inspect AI / Pydantic Evals Integrations](#11-inspect-ai--pydantic-evals-integrations)
+12. [Specification & Versioning](#12-specification--versioning)
+13. [Limitations](#13-limitations)
+14. [Contributing](#14-contributing)
+15. [Security](#15-security)
+16. [License & Acknowledgements](#16-license--acknowledgements)
+
+</details>
+
+---
 
 ## 1. Project Overview
 
-Agent Comparability is a framework-independent **specification** (`spec/SPEC.md`),
-a frozen **conformance suite**, and a thin **reference implementation** that
-adjudicates *comparability* of agent evaluation records — never the scores themselves.
+Agent Comparability is a framework-independent **specification** ([spec/SPEC.md](spec/SPEC.md)),
+a frozen **conformance suite**, and a thin **reference implementation** that adjudicates
+*comparability* of agent evaluation records — never the scores themselves.
 
 ## 2. Problem & Motivation
 
-Agent rankings reverse across harnesses; scores mix semantics (a *verified failure*
-and an *unresolved zero* both read `0.0`); missing traces silently inflate success
-rates; two variables change at once and someone claims causation. Before comparing
-results you need to know **what the evidence supports** — machine-checkably.
+Three failure modes silently corrupt agent-evaluation conclusions:
 
-## 3. What It Does
+| Failure mode | What actually goes wrong |
+|---|---|
+| **Semantics mixing** | A *verified failure* and an *unresolved zero* both read `0.0` — pooled "fail rates" become meaningless |
+| **Confounded variables** | Model and harness change at the same time — a two-variable diff gets reported as causation |
+| **Evidence gaps** | Missing traces quietly inflate success rates; rankings reverse across harnesses |
 
-- Adjudicates a **Requested Claim** (e.g. `score_compare`, `causal`,
+These boundaries should be **machine-checkable**, not vibes. That is what this project ships.
+
+## 3. What Agent Comparability Does
+
+- Adjudicates a **Requested Claim** (e.g. `score_comparison`, `causal`,
   `descriptive_registration`) against a set of evaluation records
 - Returns a **Comparison Decision Record (CDR)**: admissibility
   (`ADMISSIBLE / INADMISSIBLE / PARTIAL / INCONCLUSIVE`), satisfied/violated/unknown
@@ -33,18 +78,18 @@ results you need to know **what the evidence supports** — machine-checkably.
   and unknown-field/unknown-claim rules
 - Ships a frozen conformance suite run against three separated metrics
 
-## 4. What It Does NOT Do
+## 4. What It Does Not Do
 
-- Does **not** run agents, benchmarks, or models; no network, no credentials
-- Does **not** score anything or certify any agent's reliability — conformance
-  passing is *specification* conformance, not a reliability rating
-- Does not merge its three metrics into one number (see §10)
+> [!WARNING]
+> - Does **not** run agents, benchmarks, or models; no network, no credentials, no Docker
+> - Does **not** score anything or certify any agent's reliability
+> - Never merges its three conformance metrics into one number (see [§10](#10-conformance-suite))
 
 ## 5. Main Features
 
 - `adjudicate(records, requested_claim) -> CDR` — pure Python, zero dependencies
 - Priority-ordered decision table (evidence-missing > confounded > semantics > admissible)
-- Machine-verifiable CDR JSON Schema (`spec/cdr.schema.json`)
+- Machine-verifiable CDR JSON Schema ([spec/cdr.schema.json](spec/cdr.schema.json))
 - Frozen A/B conformance case sets; B5 public erratum precedent protected
 - Optional adapters for Inspect AI and Pydantic Evals reusing the same core
 
@@ -136,9 +181,9 @@ Both wrap the *same* core (no semantic duplication). Inspect scorer uses
 
 ## 12. Specification & Versioning
 
-Three distinct lines: software tag (e.g. `v0.4.0`), specification `cmp/0.3.1`
+Three distinct lines: software tag (e.g. `v0.5.0`), specification `cmp/0.3.1`
 (inside SPEC), and `agent_comparability.__version__`. Judgment-table changes
-require a spec major bump (SPEC §5). See CHANGELOG for the full tag lineage
+require a spec major bump (SPEC §5). See [CHANGELOG](CHANGELOG.md) for the full tag lineage
 (v0.3.1–v0.3.6 are deprecated candidates kept immutably for the record).
 
 ## 13. Limitations
