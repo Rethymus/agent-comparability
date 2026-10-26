@@ -72,11 +72,12 @@ def test_N3_N4_doc_gate_blocks_bad_link_and_fake_pip():
     shutil.rmtree(tmp, ignore_errors=True)
     tmp = _copy_tree()
     zh = tmp / "README.zh-CN.md"
+    # N4（0.5.2 起语义升级）：规范 PyPI 命令已入白名单，注入“伪造包名”变体仍必须被拦截
     zh.write_text(zh.read_text(encoding="utf-8").replace(
-        "pip install -e .                        # 最小核心，零依赖", "pip install agent-comparability"), encoding="utf-8")
+        "pip install agent-comparability ", "pip install agent-comparability-suite "), encoding="utf-8")
     r = _run(tmp, "conformance/check_docs.py")
     shutil.rmtree(tmp, ignore_errors=True)
-    assert r.returncode != 0, "docs 门禁未拦截假 pip 命令（N4 回归）"
+    assert r.returncode != 0, "docs 门禁未拦截伪造 pip 包名（N4 回归）"
 
 
 def test_N5_evaluators_check_real_task_output():

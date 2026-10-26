@@ -118,7 +118,15 @@ These boundaries should be **machine-checkable**, not vibes. That is what this p
 
 ## 6. Installation
 
-From a clone (not yet on PyPI):
+From PyPI (first published release: `0.5.2`):
+
+```bash
+pip install agent-comparability                            # minimal core, zero deps
+pip install "agent-comparability[suite]"                   # + suite basics (pyyaml, jsonschema)
+pip install "agent-comparability[suite,inspect,pydantic]"  # FULL conformance run
+```
+
+From a clone (development):
 
 ```bash
 git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
@@ -304,7 +312,7 @@ Package `v0.5.0+` (version lines unified and CI-enforced since then); specificat
 | Adapters | Inspect AI ✓ · Pydantic Evals ✓ |
 | CI gates | Terminal scan · bilingual docs · conformance ×3 · tests · release version · build + twine · package content |
 | Repo governance | `main` protected (PR + required check), release tags `v*` immutable |
-| Distribution | GitHub source only — **not yet on PyPI** |
+| Distribution | PyPI (`agent-comparability`, since `0.5.2`, Trusted Publishing) + GitHub source/tags |
 
 ## 14. Contributing
 

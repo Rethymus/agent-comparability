@@ -1,0 +1,53 @@
+name: publish-pypi
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v0.5.2); must match pyproject version"
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: pypi-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Guard - dispatch ref must be exactly the tag being published
+        run: |
+          TAG="${{ inputs.tag }}"
+          [[ "$GITHUB_REF" == "refs/tags/$TAG" ]] || { echo "FAIL: dispatch ref ($GITHUB_REF) != refs/tags/$TAG — dispatch on the tag, not a branch"; exit 1; }
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "FAIL: bad tag format: $TAG"; exit 1; }
+      - name: Checkout (pinned, at tag)
+        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3d
+        with:
+          ref: ${{ inputs.tag }}
+      - name: Setup Python (pinned)
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
+        with:
+          python-version: "3.12"
+      - name: Release version-consistency gate (pyproject == __version__ == tag)
+        run: python conformance/release_gate.py "${{ inputs.tag }}"
+      - name: Build + twine check
+        run: |
+          pip install build twine -q
+          python -m build --sdist --wheel -o dist .
+          python -m twine check dist/*
+      - name: Package content gate (spec+cases must ship)
+        run: |
+          python - <<'PY'
+          import glob, tarfile, zipfile
+          need = ["LICENSE", "NOTICE", "data/SPEC.md", "data/cdr.schema.json",
+                  "data/boundary-cases.json", "data/frozen-cases-a.json"]
+          for art in glob.glob("dist/*"):
+              names = tarfile.open(art).getnames() if art.endswith(".tar.gz") else zipfile.ZipFile(art).namelist()
+              missing = [x for x in need if not any(n.endswith(x) for n in names)]
+              assert not missing, f"{art} missing {missing}"
+          print("package content gate OK")
+          PY
+      - name: Publish to PyPI (Trusted Publishing / OIDC, no long-lived tokens)
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # v1.12.4

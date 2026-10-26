@@ -108,7 +108,15 @@ Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/
 
 ## 6. 安装
 
-从克隆安装（尚未发布 PyPI）：
+从 PyPI 安装（首个发布版本：`0.5.2`）：
+
+```bash
+pip install agent-comparability                            # 最小核心，零依赖
+pip install "agent-comparability[suite]"                   # + 套件基础（pyyaml、jsonschema）
+pip install "agent-comparability[suite,inspect,pydantic]"  # 完整 Conformance 运行
+```
+
+从克隆安装（开发）：
 
 ```bash
 git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
@@ -283,7 +291,7 @@ Pydantic Evals 适配器；任何能映射到[记录结构](spec/SPEC.md#0-范�
 | 适配器 | Inspect AI ✓ · Pydantic Evals ✓ |
 | CI 门禁 | 终扫 · 双语文档 · 一致性×3 · 测试 · 发行版本 · build+twine · 包内容 |
 | 仓库治理 | `main` 受保护（PR + 必需检查），发行 tag `v*` 不可变 |
-| 分发 | 仅 GitHub 源码——**尚未发布 PyPI** |
+| 分发 | PyPI（`agent-comparability`，自 `0.5.2` 起，Trusted Publishing）+ GitHub 源码/tag |
 
 ## 14. 参与贡献
 
