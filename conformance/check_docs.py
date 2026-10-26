@@ -18,9 +18,24 @@ for f, name in [(en, "en"), (zh, "zh")]:
             continue
         if not (Path(link).exists() or (Path(link) / "README.md").exists()):
             errs.append(f"{name}: 断链 {link}")
-# 双语互链
-if "[简体中文](README.zh-CN.md)" not in en: errs.append("en 缺中文切换链接")
-if "[English](README.md)" not in zh: errs.append("zh 缺英文切换链接")
+# 双语切换器（vue-element-admin 模式）：当前语言加粗不可点，另一语言为链接；
+# 位置必须在主标题之后（不得回到文件首行）
+def _switcher_errs(text, other_link, active_bold, name):
+    e = []
+    if other_link not in text:
+        e.append(f"{name}: 缺另一语言链接 {other_link}")
+    if f"**{active_bold}**" not in text:
+        e.append(f"{name}: 当前语言未加粗标记 **{active_bold}**")
+    if f"[{active_bold}](README" in text:
+        e.append(f"{name}: 当前语言不应是链接（自身页面无需跳转）")
+    t_idx, s_idx = text.find("# Agent Comparability"), text.find(other_link)
+    if t_idx == -1 or s_idx < t_idx:
+        e.append(f"{name}: 切换器必须位于主标题之后")
+    if not text.lstrip().startswith("<div align=\"center\">"):
+        e.append(f"{name}: 顶部应为居中块（<div align=center>）")
+    return e
+errs += _switcher_errs(en, "[简体中文](README.zh-CN.md)", "English", "en")
+errs += _switcher_errs(zh, "[English](README.md)", "简体中文", "zh")
 # 英文 README 中文内容策略：实际输出含中文（真实行为），必须带本地化说明
 import re as _re
 cjk = _re.compile(r"[一-鿿]")
