@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+- None yet.
+
+## v0.5.1 (2026-10-26)
 - (#12) Adapters are independently runnable in any order (external review finding):
   pydantic_adapter self-initializes conformance-results.json when missing (was
   FileNotFoundError on a clean checkout if run standalone); inspect_adapter now
