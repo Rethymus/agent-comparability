@@ -1,6 +1,8 @@
 """Conformance Suite 运行器：三指标分离（规范 §7），并输出每层独立结果。
 
 指标 1 集成一致性：core 经 Inspect / Pydantic 调用，输出一致（既有 9 案例复核 + B 集）。
+  Pydantic 路线的 Evaluator 只检查被评测 task 的真实输出（ctx.output）与冻结预期，
+  绝不在评估器内重算判定（#10 P0：重算式评估无法证明 task 输出正确）。
 指标 2 规范一致性：independent_impl（依规范）对 A+B 全案例的判定 vs 冻结预期。
 指标 3 策略正确性：core 对 A+B 全案例的判定 vs 冻结预期（B 集是 0.2 的 gap 检验，
   允许暴露缺陷——修复须以规范为准，不得改预期）。
@@ -12,34 +14,31 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "adapters"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 RELEASE = ROOT / "release"
 OUT = ROOT / "conformance-results.json"
 
-# A 集（既有 9 对）+ B 集（边界）
-sys.path.insert(0, str(ROOT / "adapters"))
-from inspect_adapter import CASES as A_CASES  # noqa
-B = json.loads((ROOT / "conformance/boundary-cases.json").read_text(encoding="utf-8"))
+from cases import all_pairs  # 共享案例加载器（A+B 全 22 对）——单一事实来源（#8/#10）
 
 from agent_comparability import core
 import independent_impl as indep  # 独立实现（规范一致性受检对象）
 
+try:  # 模块级定义以便负向回归测试直接导入（tests/test_gate_regressions.py N5）
+    from pydantic_evals.evaluators import Evaluator, EvaluatorContext
 
-def run_all_cases():
-    pairs = []  # (case_id, claim, expected, records)
-    for c in A_CASES:
-        for claim, expected in c["claims"].items():
-            pairs.append((c["id"], claim, expected, c["records"]))
-    for c in B["cases"]:
-        for claim, expected in c["claims"].items():
-            pairs.append((c["id"], claim, expected, c["records"]))
-    return pairs
+    class CDRParity(Evaluator):
+        """只检查被评测 task 的真实输出（ctx.output）与冻结预期一致（#10 P0：不得在此重算判定）。"""
+
+        def evaluate(self, ctx: EvaluatorContext) -> float:
+            return 1.0 if ctx.output == ctx.expected_output else 0.0
+except ImportError:  # 未安装 .[pydantic]：main() 按路线未执行（FAIL）处理
+    CDRParity = None
 
 
 def main() -> int:
-    pairs = run_all_cases()
+    pairs = all_pairs()
 
     # --- 指标 3：策略正确性（core vs 冻结预期）---
     core_rows = []
@@ -85,14 +84,11 @@ def main() -> int:
     except Exception as e:
         inspect_err = f"{type(e).__name__}: {e}"
     try:
-        # Pydantic 路线：真实 Dataset/Case/Evaluator 机制逐对执行（与 adapters/pydantic_adapter 同机制）
+        # Pydantic 路线：真实 Dataset/Case/Evaluator 机制逐对执行（与 adapters/pydantic_adapter 同机制）。
+        # Evaluator 只检查 task 真实输出（ctx.output）vs 冻结预期——绝不在评估器内重算（#10 P0）。
+        if CDRParity is None:
+            raise RuntimeError("pydantic_evals 未安装（需 .[pydantic]）")
         from pydantic_evals import Case, Dataset
-        from pydantic_evals.evaluators import Evaluator, EvaluatorContext
-
-        class CDRParity(Evaluator):
-            def evaluate(self, ctx: EvaluatorContext) -> float:
-                cdr = core.adjudicate(*ctx.inputs)
-                return 1.0 if cdr.admissibility == ctx.expected_output else 0.0
 
         ds = Dataset(name="metric1-pydantic",
                      cases=[Case(name=f"{cid}:{claim}", inputs=({"id": cid, "records": recs}, claim),
@@ -105,6 +101,10 @@ def main() -> int:
             score = next(iter(c.scores.values())).value
             cid, _, claim = c.name.partition(":")
             pyd_rows.append({"case": cid, "claim": claim, "ok": score == 1.0})
+        for f in rep.failures:  # task 执行失败（抛错）同样是失败，不得静默丢失
+            cid, _, claim = f.name.partition(":")
+            pyd_rows.append({"case": cid, "claim": claim, "ok": False,
+                             "error": f.error_message[:80]})
         pydantic_executed = True
     except Exception as e:
         pyd_err = f"{type(e).__name__}: {e}"

@@ -1,8 +1,11 @@
 """路 2b：Pydantic Evals Evaluator 包装 cmp/core.adjudicate（真实运行，非探针）。
 
-同一批冻结案例（frozen-cases.json 的 6 案例×9 claim-判定对）通过
-pydantic_evals Dataset/Case/Evaluator 处理；Evaluator 内部调用同一核心库，
-逐条与冻结参考判定比对一致性；结果并入 conformance-results.json。
+共享加载器（cases.all_pairs，A+B 全 22 对）构建 Dataset/Case，经 pydantic_evals
+真实机制逐对执行；Evaluator 只检查被评测 task 的真实输出（ctx.output，完整 CDR）
+与冻结参考判定一致（#10 P0：不得在 Evaluator 内重算）；最终通过判定与逐条明细
+全部取自 evaluate_sync() 返回的 report（cases + failures），task 执行失败与案例
+缺失同样传导为非零退出码（#10 P1：不再旁路重算旧 A 集循环）。
+结果并入 conformance/conformance-results.json（inspect 路线先行生成该文件）。
 """
 
 import json
@@ -16,21 +19,18 @@ from agent_comparability import adjudicate, POLICY_VERSION  # 同一核心判断
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import Evaluator, EvaluatorContext
 
-OUT = ROOT / "conformance"
-
-# 冻结案例（与 run_conformance.CASES 完全同源；从模块导入保证一致）
-from inspect_adapter import CASES, FROZEN  # A 集（兼容保留）
 sys.path.insert(0, str(ROOT / "conformance"))
 import cases as shared_cases  # 共享加载器（A+B 全 22 对）
 
+OUT = ROOT / "conformance"
+
 
 class CDRAdjudicator(Evaluator):
-    """包装核心库的 Evaluator：inputs=(case, claim)，output=admissibility 字符串，
-    expected_output=冻结参考判定。评估=判定与预期一致（1.0/0.0）+ 结构完整性。"""
+    """只依据被评测 task 的真实输出（ctx.output，完整 CDR）判定，不在此重算：
+    判定与冻结预期一致（1.0/0.0）+ 结构完整性（policy_version/防篡改限制在位）。"""
 
     def evaluate(self, ctx: EvaluatorContext) -> float:
-        case, claim = ctx.inputs
-        cdr = adjudicate(case, claim)
+        cdr = ctx.output  # task 真实输出；绝不重新调用 adjudicate（#10 P0）
         structurally_valid = (
             cdr.admissibility in ("ADMISSIBLE", "INADMISSIBLE", "INCONCLUSIVE", "PARTIAL")
             and POLICY_VERSION == cdr.policy_version
@@ -40,7 +40,6 @@ class CDRAdjudicator(Evaluator):
 
 
 def main() -> int:
-    # 共享加载器（A+B 全 22 对）——与 run_suite/inspect 路线同覆盖面
     cases_flat = []
     for cid, claim, expected, recs in shared_cases.all_pairs():
         cases_flat.append(Case(name=f"{cid}:{claim}",
@@ -48,36 +47,49 @@ def main() -> int:
                                expected_output=expected))
     ds = Dataset(name="cmp-conformance-pydantic-route", cases=cases_flat,
                  evaluators=[CDRAdjudicator()])
-    report = ds.evaluate_sync(task=lambda inputs: adjudicate(*inputs).admissibility,
-                              progress=False)
+    # task 返回完整 CDR：判定与结构信息全部来自被评测路线的真实输出
+    report = ds.evaluate_sync(task=lambda inputs: adjudicate(*inputs), progress=False)
 
-    # 逐条结果与 CDR 细节
+    # 逐条结果与 CDR 细节：全部取自 report（#10 P1）
     rows, all_ok = [], True
-    for c in CASES:
-        for claim, expected in c["claims"].items():
-            cdr = adjudicate(c, claim)
-            ok = cdr.admissibility == expected
-            all_ok &= ok
-            rows.append({"case": c["id"], "claim": claim,
-                         "pydantic_output": cdr.admissibility, "expected": expected,
-                         "consistent_with_frozen": ok,
-                         "supported": cdr.supported_claims, "unsupported": cdr.unsupported_claims,
-                         "limitations_fixed": cdr.limitations[0][:20] + "…"})
+    for c in report.cases:
+        cid, _, claim = c.name.partition(":")
+        cdr = c.output  # task 真实输出（CDR 对象），非重算
+        score = next(iter(c.scores.values())).value
+        ok = score == 1.0 and not c.evaluator_failures
+        all_ok &= ok
+        rows.append({"case": cid, "claim": claim,
+                     "pydantic_output": cdr.admissibility, "expected": c.expected_output,
+                     "consistent_with_frozen": ok,
+                     "supported": cdr.supported_claims, "unsupported": cdr.unsupported_claims,
+                     "limitations_fixed": cdr.limitations[0][:20] + "…"})
+    for f in report.failures:  # task 执行失败（抛错）必须传导为失败
+        cid, _, claim = f.name.partition(":")
+        all_ok = False
+        rows.append({"case": cid, "claim": claim,
+                     "pydantic_output": None, "expected": f.expected_output,
+                     "consistent_with_frozen": False,
+                     "task_error": f.error_message[:120]})
+    # 覆盖门禁：报告案例数（成功+失败）必须等于输入案例数——缺一即失败，防静默丢案例
+    if len(report.cases) + len(report.failures) != len(cases_flat):
+        all_ok = False
     adapter_loc = len(Path(__file__).read_text(encoding="utf-8").splitlines())
 
-    # 并入 conformance-results.json（保留全部既有路线）
+    # 并入 conformance-results.json（保留全部既有路线；由 inspect 路线先行生成）
     res_path = OUT / "conformance-results.json"
     res = json.loads(res_path.read_text(encoding="utf-8"))
     res["route2b_pydantic_evaluator"] = {
         "framework": f"pydantic_evals (installed {__import__('pydantic_evals').__name__})",
-        "how": "Dataset/Case + 自定义 Evaluator(CDRAdjudicator) 包装同一 cmp/core.adjudicate；"
-               "task=核心库调用；逐条与冻结 expected_output 比对",
-        "rows": rows, "all_consistent": all_ok,
+        "how": "Dataset/Case + 自定义 Evaluator(CDRAdjudicator)；task=核心库调用返回完整 CDR；"
+               "Evaluator 只检查 ctx.output 真实输出 vs 冻结 expected_output（不在评估器内重算）；"
+               "最终判定取自 report.cases/failures（全 22 对 + 覆盖门禁）",
+        "rows": rows, "all_consistent": all_ok, "pairs_reported": len(rows),
         "adapter_loc": adapter_loc, "core_loc": 122,
         "note": "Inspect 路线 25 行适配 vs 本路线 ~40 行（含逐条明细导出）；两路线共享同一核心库、零语义重复",
     }
     res_path.write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"route2b_all_consistent": all_ok,
+                      "pairs_reported": len(rows),
                       "rows": [{k: r[k] for k in ("case", "claim", "pydantic_output", "consistent_with_frozen")} for r in rows],
                       "adapter_loc": adapter_loc}, ensure_ascii=False, indent=1))
     return 0 if all_ok else 1

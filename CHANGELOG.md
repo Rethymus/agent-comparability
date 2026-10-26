@@ -1,6 +1,18 @@
 # Changelog
 
 ## Unreleased
+- (#10) Pydantic route verdict hardening (external review finding): evaluators now
+  check the task's REAL output (`ctx.output`) against frozen expectations instead
+  of re-adjudicating inside the evaluator (false-consistency risk — a re-computing
+  evaluator cannot prove the task output correct); applies to both run_suite's
+  CDRParity and the adapter's CDRAdjudicator (which now receives the full CDR)
+- (#10) Adapter exit code now derives from the full 22-pair report
+  (report.cases + report.failures + coverage gate: reported == input count)
+  instead of a legacy A-set re-adjudication loop; run_suite now reuses
+  cases.all_pairs() directly (single loader, duplicate run_all_cases removed)
+- (#10) New permanent negative regressions N5/N6: wrong task output must score
+  0 (both evaluators, with positive control) and must propagate to adapter
+  non-zero exit with all 22 pairs still reported
 - (#8) Install docs now distinguish minimal core / suite basics / FULL conformance
   install (.[suite,inspect,pydantic]) — matching run_suite's adapter-required policy;
   §10 notes missing-adapter→FAIL behavior (EN+zh)
