@@ -5,7 +5,8 @@
 与冻结参考判定一致（#10 P0：不得在 Evaluator 内重算）；最终通过判定与逐条明细
 全部取自 evaluate_sync() 返回的 report（cases + failures），task 执行失败与案例
 缺失同样传导为非零退出码（#10 P1：不再旁路重算旧 A 集循环）。
-结果并入 conformance/conformance-results.json（inspect 路线先行生成该文件）。
+结果并入 conformance/conformance-results.json——文件不存在时自初始化，
+可独立运行，与 inspect 路线互无顺序依赖（#12）。
 """
 
 import json
@@ -75,9 +76,11 @@ def main() -> int:
         all_ok = False
     adapter_loc = len(Path(__file__).read_text(encoding="utf-8").splitlines())
 
-    # 并入 conformance-results.json（保留全部既有路线；由 inspect 路线先行生成）
+    # 并入 conformance-results.json：不存在时自初始化（干净环境可独立运行），
+    # 存在时保留既有路线段落——与 inspect 路线同模式，消除运行顺序依赖（#12）
     res_path = OUT / "conformance-results.json"
-    res = json.loads(res_path.read_text(encoding="utf-8"))
+    res = (json.loads(res_path.read_text(encoding="utf-8"))
+           if res_path.exists() else {})
     res["route2b_pydantic_evaluator"] = {
         "framework": f"pydantic_evals (installed {__import__('pydantic_evals').__name__})",
         "how": "Dataset/Case + 自定义 Evaluator(CDRAdjudicator)；task=核心库调用返回完整 CDR；"
