@@ -16,13 +16,17 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -e .[suite] pytest -q
+        run: pip install -e .[suite,inspect,pydantic] pytest -q
       - name: Terminal scan (self-containment gate)
         run: python conformance/terminal_scan.py
       - name: Doc sync & links (bilingual gate)
         run: python conformance/check_docs.py
-      - name: Conformance suite (three separated metrics)
+      - name: Conformance suite (three separated metrics; integration metric must execute)
         run: python conformance/run_suite.py
+      - name: Adapters actually run (inspect + pydantic)
+        run: |
+          python adapters/inspect_adapter.py
+          python adapters/pydantic_adapter.py
       - name: Tests (smoke + properties + gate regressions N1-N4)
         run: python -m pytest tests/ -q
       - name: Release version-consistency gate

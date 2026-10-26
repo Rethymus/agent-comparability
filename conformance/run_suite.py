@@ -114,6 +114,10 @@ def main() -> int:
         fails = [r for r in result[m]["rows"] if not r["ok"]]
         if fails:
             print(f"\n{m} 失败:", [(r["case"], r["claim"], r["got"], "expect=" + r["expected"]) for r in fails])
+    if integ_pass is None or not integ_rows:
+        # 集成指标未执行（依赖缺失/适配器异常）不得静默计为通过——与 N2 同类风险
+        print("\nmetric1_integration_consistency 未执行（需安装 .[inspect] 与 .[pydantic]）——按 FAIL 处理")
+        any_fail = True
     if integ_rows and not all(r.get("ok") for r in integ_rows):
         any_fail = True
     if schema_fail:

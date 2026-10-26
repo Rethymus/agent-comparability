@@ -49,7 +49,7 @@ results you need to know **what the evidence supports** — machine-checkably.
 From a clone (not yet on PyPI):
 
 ```bash
-git clone <this-repo> agent-comparability && cd agent-comparability
+git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
 pip install -e .            # core, zero deps
 pip install -e .[suite]     # + conformance suite (pyyaml, jsonschema)
 ```
@@ -66,10 +66,12 @@ cdr = adjudicate({"id": "demo", "records": [
      "reward": 1.0, "reward_status": "verified"},
     {"task_id": "t1", "harness": "h2", "model": "m1",
      "reward": 0.0, "reward_status": "unresolved_zero"}]},
-    "score_compare")
+    "score_comparison")
 ```
 
 ## 8. Input/Output Example (actual output)
+
+> Note: the reference implementation's condition/claim messages are currently in Chinese; the admissibility verdict itself is locale-neutral.
 
 The quickstart call returns:
 
@@ -84,7 +86,7 @@ A confounded group instead:
 cdr = adjudicate({"id": "x", "records": [
     {"task_id": "a", "harness": "h1", "model": "m1", "reward": 1.0, "reward_status": "verified"},
     {"task_id": "b", "harness": "h2", "model": "m2", "reward": 0.0, "reward_status": "verified"}]},
-    "score_compare")
+    "score_comparison")
 ```
 
 ```

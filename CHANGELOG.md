@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (post-publication validation fixes)
+- P0: README clone commands now use the real repo URL (EN + 简体中文)
+- P0: run_suite treats integration metric NOT-EXECUTED (deps missing/adapter
+  exception) as FAIL with non-zero exit (same defect family as N2); CI now
+  installs [suite,inspect,pydantic] and runs both adapters explicitly
+- P1: docs/tests use spec-canonical `score_comparison`; SPEC documents the
+  frozen A-set legacy alias `score_compare`
+- check_docs: EN-README Chinese-fragment policy (real output is Chinese →
+  localization note required) + bilingual key-token parity
+
 All versions immutable once tagged. v0.3.1–v0.3.6 are **deprecated candidates**
 kept for the record (each superseded for a verified defect; see git history notes).
 

@@ -38,7 +38,7 @@ Agent 排名会随 Harness 反转；分数混同语义（*已验证的失败*与
 从克隆安装（尚未发布 PyPI）：
 
 ```bash
-git clone <本仓库> agent-comparability && cd agent-comparability
+git clone https://github.com/Rethymus/agent-comparability.git && cd agent-comparability
 pip install -e .            # 核心，零依赖
 pip install -e .[suite]     # + 一致性套件（pyyaml、jsonschema）
 ```
@@ -55,7 +55,7 @@ cdr = adjudicate({"id": "demo", "records": [
      "reward": 1.0, "reward_status": "verified"},
     {"task_id": "t1", "harness": "h2", "model": "m1",
      "reward": 0.0, "reward_status": "unresolved_zero"}]},
-    "score_compare")
+    "score_comparison")
 ```
 
 ## 8. 输入/输出示例（真实输出）
@@ -73,7 +73,7 @@ cdr.supported_claims   -> ['per_status_stratified_rate(verified_zero/unresolved_
 cdr = adjudicate({"id": "x", "records": [
     {"task_id": "a", "harness": "h1", "model": "m1", "reward": 1.0, "reward_status": "verified"},
     {"task_id": "b", "harness": "h2", "model": "m2", "reward": 0.0, "reward_status": "verified"}]},
-    "score_compare")
+    "score_comparison")
 ```
 
 ```
