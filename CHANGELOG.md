@@ -4,6 +4,22 @@
 
 - None yet.
 
+## v0.5.2 (2026-10-26)
+- PyPI distribution debut (E phase): first published version is 0.5.2 via
+  Trusted Publishing — dedicated publish-pypi.yml workflow (manual
+  workflow_dispatch only, GitHub Environment `pypi`, OIDC short-lived
+  credentials, no long-lived PyPI tokens), builds verified from the fixed
+  release tag (version gate + twine check + package content gate before upload)
+- Install docs now PyPI-primary (EN+zh): canonical `pip install
+  agent-comparability` plus quoted extras forms; clone/`-e` kept for
+  development; project-status distribution row updated (was "not yet on PyPI")
+- Docs gate upgraded from "block every non-`-e` pip install" to an exact
+  allowlist of the six canonical commands (fabricated package names still
+  blocked — N4 semantics preserved, anchor updated); bilingual presence of the
+  PyPI primary command now enforced
+- No functional, test-semantics, or specification changes; specification
+  remains cmp/0.3.1; v0.5.0/v0.5.1 tags untouched
+
 ## v0.5.1 (2026-10-26)
 - (#12) Adapters are independently runnable in any order (external review finding):
   pydantic_adapter self-initializes conformance-results.json when missing (was

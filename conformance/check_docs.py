@@ -47,10 +47,21 @@ for tok in ["ADMISSIBLE", "INADMISSIBLE", "PARTIAL", "INCONCLUSIVE",
     ce, cz = en.count(tok), zh.count(tok)
     if tok in ("ADMISSIBLE", "INCONCLUSIVE") and (ce == 0 or cz == 0):
         errs.append(f"关键标记缺失: {tok} en={ce} zh={cz}")
-# PyPI 误导命令
+# PyPI 安装命令（0.5.2 起 PyPI 为正式分发渠道）：精确白名单——仅允许规范 PyPI 命令
+# （裸名/带 extras 引号形式）与 -e 本地形式；其余形似包名的命令一律拦截（N4 语义延续：
+# 不得出现伪造安装命令），且双语都必须提供 PyPI 主安装命令（双语等价）
+_ALLOWED_PIP = {
+    "-e .", "-e .[suite]", "-e .[inspect]", "-e .[pydantic]", "-e .[suite,inspect,pydantic]",
+    "agent-comparability", '"agent-comparability[suite]"',
+    '"agent-comparability[suite,inspect,pydantic]"',
+}
 for f, name in [(en, "en"), (zh, "zh")]:
-    if re.search(r"pip install (?!-e)[a-z-]+comparability", f):
-        errs.append(f"{name}: 出现非 -e 的 pip install（未发 PyPI）")
+    for m in re.finditer(r"^pip install (.+?)(?:\s+#.*)?$", f, re.M):
+        cmd = m.group(1).split("&&")[0].strip()  # 链式命令（§11）只校验 pip 部分
+        if cmd not in _ALLOWED_PIP:
+            errs.append(f"{name}: 非规范 pip 安装命令: pip install {cmd}")
+    if "pip install agent-comparability" not in f:
+        errs.append(f"{name}: 缺 PyPI 主安装命令 pip install agent-comparability")
 for e in errs: print("FAIL:", e)
 print("docs check:", "OK" if not errs else f"{len(errs)} errors")
 sys.exit(1 if errs else 0)
