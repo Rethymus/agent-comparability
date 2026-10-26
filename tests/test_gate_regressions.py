@@ -1,5 +1,5 @@
-"""永久回归：负向门禁 N1-N6 的可执行断言（原始失败记录见 VALIDATION.md 与 git 历史
-ad14fb5/541494d 修复提交；N5/N6 源自 #10）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。"""
+"""永久回归：负向门禁 N1-N7 的可执行断言（原始失败记录见 VALIDATION.md 与 git 历史
+ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。"""
 import importlib
 import json
 import shutil
@@ -138,6 +138,27 @@ def test_N6_adapter_verdict_from_report_all_pairs():
     assert r.returncode != 0, "错误 task 输出未传导为适配器非零退出码（N6 回归）"
     assert '"route2b_all_consistent": false' in r.stdout
     assert '"pairs_reported": 22' in r.stdout
+
+
+def test_N7_adapters_runnable_standalone_any_order():
+    """#12 回归：干净环境（无 conformance-results.json）两个适配器均可独立运行，
+    且任一运行顺序都保留另一路线已写入的结果段（消除顺序依赖）。"""
+    pytest.importorskip("pydantic_evals")
+    pytest.importorskip("inspect_ai")
+    tmp = _copy_tree()
+    (tmp / "conformance/conformance-results.json").unlink(missing_ok=True)  # 干净环境
+    r_pyd = _run(tmp, "adapters/pydantic_adapter.py")
+    assert r_pyd.returncode == 0, "pydantic 适配器独立运行失败（N7 回归）"
+    res = json.loads((tmp / "conformance/conformance-results.json").read_text(encoding="utf-8"))
+    assert res["route2b_pydantic_evaluator"]["pairs_reported"] == 22, "独立运行未报告全 22 对（N7 回归）"
+    # 反向顺序：inspect 后跑必须保留 pydantic 已写入的段落（修复前为整体覆盖写）
+    r_insp = _run(tmp, "adapters/inspect_adapter.py")
+    assert r_insp.returncode == 0
+    res2 = json.loads((tmp / "conformance/conformance-results.json").read_text(encoding="utf-8"))
+    assert res2["route2b_pydantic_evaluator"]["pairs_reported"] == 22, \
+        "inspect 后跑覆盖了 pydantic 段（N7 回归）"
+    assert "route1_reference" in res2, "inspect 自身段落缺失（N7 回归）"
+    shutil.rmtree(tmp, ignore_errors=True)
 
 
 def test_assertions_not_skipped_or_weakened():

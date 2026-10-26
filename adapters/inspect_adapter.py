@@ -173,8 +173,14 @@ def main() -> int:
               "loc": {"cmp_core": core_loc, "inspect_only_baseline_approx": 40,
                       "note": "基线仅能以 C/I+metadata 近似；细分判定(PARTIAL/INCONCLUSIVE)靠自定义 value 字符串约定"},
               "deps": {"cmp_core": 0, "inspect_adapter": "inspect-ai", "baseline": "inspect-ai"}}
-    (OUT / "conformance-results.json").write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str),
-                                                  encoding="utf-8")
+    res_path = OUT / "conformance-results.json"
+    if res_path.exists():  # 保留其他路线已写入的段落（如 route2b）——消除适配器运行顺序依赖（#12）
+        merged = json.loads(res_path.read_text(encoding="utf-8"))
+    else:
+        merged = {}
+    merged.update(report)
+    res_path.write_text(json.dumps(merged, ensure_ascii=False, indent=2, default=str),
+                        encoding="utf-8")
     print(json.dumps({"route1_matches_frozen": ref_match,
                       "route2_consistent": all(x.get("consistent", False) for x in cross) if cross else insp[:1],
                       "route3_agreement": report["route3_admissibility_agreement"],

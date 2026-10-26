@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- (#12) Adapters are independently runnable in any order (external review finding):
+  pydantic_adapter self-initializes conformance-results.json when missing (was
+  FileNotFoundError on a clean checkout if run standalone); inspect_adapter now
+  merges into the existing file instead of wholesale overwrite (previously
+  silently dropped route2b when run after pydantic); regression N7 covers
+  standalone clean-env run + both-order section preservation
 - (#10) Pydantic route verdict hardening (external review finding): evaluators now
   check the task's REAL output (`ctx.output`) against frozen expectations instead
   of re-adjudicating inside the evaluator (false-consistency risk — a re-computing
