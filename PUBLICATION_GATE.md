@@ -68,7 +68,7 @@
 |---|---|---|
 | A | 写入上述两个 Rulesets（active） | **已完成（2026-10-26）**：protect-main id=25851004（deletion+non_ff+PR(0 approvals,无隐式审批,含 require_extra_approval_for_unattributed_changes=false)+required_status_checks=conformance）、protect-release-tags id=25851119（target=**tag**，deletion+non_ff+update，refs/tags/v*）。实施中发现并修正两处 API 事实：①pull_request 规则不接受内嵌 required_status_checks，须用独立 required_status_checks 规则类型；②tag 规则须 target="tag" 而非 "branch"（否则模式被判非法）。验证：直接 push main 被拒（"push declined due to repository rule violations"）✓；读回 enforcement=active 无 bypass ✓ |
 | B | Topics 写入 + About 核对 | **已完成（2026-10-26）**：description="Portable comparison semantics and conformance tests for AI agent evaluations."（owner 指定文案）；topics=ai-agents/agent-evaluation/conformance-testing/specification/reliability（API 读回五项确认，以仓库实际功能为准） |
-| C | 仓库转 Public | 安全审计全绿；建议先 A+B、并自行过目 2 个失败 run 链接 |
+| C | 仓库转 Public | **已完成（2026-10-26）**：visibility=PUBLIC（API private=false）；公开后只读核验——匿名 repo 页/双语 README raw 均 200、匿名浅克隆成功且 README 首案例复现（PARTIAL + per_status_stratified_rate）、**Rulesets 转公开后复查仍双 active**（GitHub Docs 警告项已覆盖）、license 识别 Apache-2.0、default=main |
 | D | GitHub Release（v0.5.0） | 依赖 C（或私有 Release 亦可，需明示） |
 | E | PyPI（Trusted Publishing） | 包已 build+twine 校验；名称曾核实可用（发布日需重验） |
 
