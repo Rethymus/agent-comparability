@@ -44,6 +44,8 @@
 15. [Security](#15-security)
 16. [License & Acknowledgements](#16-license--acknowledgements)
 
+[FAQ](#faq) · [Project status](#project-status)
+
 </details>
 
 ---
@@ -53,6 +55,18 @@
 Agent Comparability is a framework-independent **specification** ([spec/SPEC.md](spec/SPEC.md)),
 a frozen **conformance suite**, and a thin **reference implementation** that adjudicates
 *comparability* of agent evaluation records — never the scores themselves.
+
+**Who is this for**: developers comparing agent/prompt/harness evaluation results,
+benchmark authors documenting what conclusions their data supports, and teams building
+reliability pipelines on top of existing eval frameworks.
+
+### How it relates to existing tools
+
+| Tool | What it does | Relation to Agent Comparability |
+|---|---|---|
+| [Inspect AI](https://inspect.aisi.org.uk) | Runs evals, agents, sandboxes | Complementary — Inspect *executes*; this decides what comparisons its results support. Adapter provided. |
+| [Pydantic Evals](https://pydantic.dev) | Datasets, cases, reporting | Complementary reporting layer over the same core. Adapter provided. |
+| Benchmark harnesses (lm-eval, SWE-bench, …) | Measure models | They *produce* records; this adjudicates what comparisons of those records mean |
 
 ## 2. Problem & Motivation
 
@@ -77,6 +91,15 @@ These boundaries should be **machine-checkable**, not vibes. That is what this p
   verified), score-scale consistency (range/unit/verifier), zero-semantics splits,
   and unknown-field/unknown-claim rules
 - Ships a frozen conformance suite run against three separated metrics
+
+**Admissibility quick reference** (full priority rules in [SPEC §3.3](spec/SPEC.md)):
+
+| Verdict | Meaning | Typical trigger |
+|---|---|---|
+| `ADMISSIBLE` | Requested conclusion is supported | Same task / model / score scale, all records verified |
+| `INADMISSIBLE` | Conclusion not supported | Confounded variables, task mismatch, or score-scale mismatch |
+| `PARTIAL` | Only split presentation allowed | `verified` failures mixed with `unresolved_zero` |
+| `INCONCLUSIVE` | Evidence insufficient to judge | Missing traces / evidence anchors |
 
 ## 4. What It Does Not Do
 
@@ -143,7 +166,41 @@ cdr.admissibility       -> INADMISSIBLE
 cdr.violated_conditions -> ['same_task_id', 'same_model', 'single_variable_isolation']
 ```
 
-`cdr.to_dict()` emits the full CDR (schema-validated).
+`cdr.to_dict()` emits the full CDR (schema-validated). The quickstart call's complete
+CDR — actual output:
+
+```json
+{
+  "case_id": "demo",
+  "requested_claim": "score_comparison",
+  "comparison_scope": "2 records; models=['m1']; harnesses=['h1', 'h2']",
+  "admissibility": "PARTIAL",
+  "satisfied_conditions": [
+    "same_task_id",
+    "same_model",
+    "single_variable_isolation",
+    "continuous_score_preserved({'range': '0..1', 'unit': 'fraction', 'verifier': 'source'})"
+  ],
+  "violated_conditions": [
+    "zero_semantics_uniform(verified_zero != unresolved_zero)"
+  ],
+  "unknown_conditions": [],
+  "supported_claims": [
+    "per_status_stratified_rate(verified_zero/unresolved_zero 分列)"
+  ],
+  "unsupported_claims": [
+    "pooled_fail_rate(0 分语义混同)"
+  ],
+  "evidence_refs": [
+    "rec:t1/m1/h1",
+    "rec:t1/m1/h2"
+  ],
+  "policy_version": "cmp/0.3.1",
+  "limitations": [
+    "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
+  ]
+}
+```
 
 ## 9. Architecture
 
@@ -155,6 +212,20 @@ src/agent_comparability/data/    ← SPEC + schema + frozen cases (packaged)
 conformance/                     ← run_suite.py (3 metrics) + independent_impl.py + cases
 adapters/                        ← optional inspect-ai / pydantic-evals wrappers
 tests/                           ← smoke + property tests
+```
+
+Adjudication flow (priority order, per [SPEC §3.3](spec/SPEC.md)):
+
+```mermaid
+flowchart LR
+    A[Records + Requested Claim] --> B{trace available?}
+    B -- missing --> C[INCONCLUSIVE]
+    B -- ok --> D{task / model /<br/>score scale consistent?}
+    D -- conflict --> E[INADMISSIBLE]
+    D -- ok --> F{zero semantics uniform?}
+    F -- verified + unresolved mixed --> G[PARTIAL]
+    F -- ok --> H[ADMISSIBLE]
+    C & E & G & H --> V[CDR<br/>supported + forbidden claims]
 ```
 
 ## 10. Conformance Suite
@@ -193,6 +264,41 @@ require a spec major bump (SPEC §5). See [CHANGELOG](CHANGELOG.md) for the full
   tamper-resistance (SPEC §1)
 - No repetition/cost modeling inside adjudication (handled by callers)
 - Chinese/English docs kept equivalent; translation drift tracked in CI link checks
+
+## FAQ
+
+**Does passing the conformance suite certify my agent is reliable?**
+No. It certifies that an *implementation* matches the specification. It says nothing about any agent.
+
+**Can I use it with my existing eval framework?**
+Yes. The core is framework-independent (`adjudicate()` is a pure function over record
+dicts). Adapters for Inspect AI and Pydantic Evals are included; any framework whose
+output you can map to the [record schema](spec/SPEC.md#0-范围与目的) works.
+
+**Why not just compare scores?**
+Because `0.0` can mean a *verified failure* or an *unresolved zero*; because model and
+harness changing together turns a diff into an unfounded causal claim; and because
+missing traces inflate success rates silently. §2's failure modes are all real-world
+artifacts, not hypotheticals.
+
+**Does it run agents or benchmarks?**
+No — no network, no credentials, no Docker. It only ever sees the records you pass in.
+
+**Which versions should I depend on?**
+Package `v0.5.0+` (version lines unified and CI-enforced since then); specification
+`cmp/0.3.1` evolves independently — see [§12](#12-specification--versioning).
+
+## Project status
+
+| Component | Status |
+|---|---|
+| Specification `cmp/0.3.1` | Stable — frozen conformance set anchors it |
+| Claim types | `score_comparison`, `causal`, `descriptive_registration` (+ unknown → `INCONCLUSIVE`) |
+| Conformance cases | 22 frozen pairs (A + B sets), three separated metrics, all green in CI |
+| Adapters | Inspect AI ✓ · Pydantic Evals ✓ |
+| CI gates | Terminal scan · bilingual docs · conformance ×3 · tests · release version · build + twine · package content |
+| Repo governance | `main` protected (PR + required check), release tags `v*` immutable |
+| Distribution | GitHub source only — **not yet on PyPI** |
 
 ## 14. Contributing
 

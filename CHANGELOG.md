@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- README round 2: full real CDR JSON example (§8), mermaid adjudication
+  flowchart (§9, GitHub-native render), admissibility quick-reference table (§3),
+  tool-positioning table + audience line (§1), FAQ (6 Q&As), Project-status
+  matrix; all mirrored in 简体中文 with field-level CDR parity audit
 - Full README revamp modeled on popular OSS patterns (surveyed: ohmyzsh collapsible
   ToC + admonitions, vue-element-admin header/switcher, doocs/leetcode cross-link):
   real badge row (GitHub Actions CI / Apache-2.0 / Python 3.10+ — no fabricated

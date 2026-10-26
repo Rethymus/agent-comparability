@@ -43,6 +43,8 @@
 15. [安全](#15-安全)
 16. [许可与致谢](#16-许可与致谢)
 
+[常见问题](#常见问题) · [项目状态](#项目状态)
+
 </details>
 
 ---
@@ -50,6 +52,16 @@
 ## 1. 项目概览
 
 Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/SPEC.md)）、冻结的**一致性测试套件**和极薄的**参考实现**，它裁决的是 Agent 评测记录的*可比性*——从不为分数本身评分。
+
+**适用人群**：需要比较 Agent/Prompt/Harness 评测结果的开发者、希望说明"自己的基准数据支持什么结论"的基准作者、以及在现有评测框架之上构建可靠性管线的团队。
+
+### 与现有工具的关系
+
+| 工具 | 它做什么 | 与本项目的关系 |
+|---|---|---|
+| [Inspect AI](https://inspect.aisi.org.uk) | 运行评测、Agent、沙箱 | 互补——Inspect 负责*执行*；本项目裁决其结果支持什么比较。提供适配器。 |
+| [Pydantic Evals](https://pydantic.dev) | 数据集、用例、报告 | 互补的报告层，经适配器复用同一核心。 |
+| 基准框架（lm-eval、SWE-bench 等） | 测量模型 | 它们*产出*记录；本项目裁决这些记录之间的比较意味着什么 |
 
 ## 2. 问题与动机
 
@@ -69,6 +81,15 @@ Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/
 - 返回**比较决策记录（CDR）**：可采纳性（`ADMISSIBLE / INADMISSIBLE / PARTIAL / INCONCLUSIVE`）、满足/违反/未知条件、**允许的结论与禁止的结论**、证据引用、规范版本
 - 强制证据信任分层（Agent 自报 / 来源验证器 / 独立复验）、评分尺度一致性（范围/单位/验证器）、零分语义拆分、未知字段与未知结论规则
 - 内置冻结一致性套件，按三个分离指标运行
+
+**可采纳性速查**（完整优先级规则见 [SPEC §3.3](spec/SPEC.md)）：
+
+| 判定 | 含义 | 典型触发 |
+|---|---|---|
+| `ADMISSIBLE` | 所请求结论获得支持 | 同任务/模型/评分尺度，全部 verified |
+| `INADMISSIBLE` | 结论不被支持 | 变量混淆、任务不一致或评分尺度不一致 |
+| `PARTIAL` | 仅允许拆分形式呈现 | `verified` 失败与 `unresolved_zero` 混同 |
+| `INCONCLUSIVE` | 证据不足以判定 | 轨迹缺失/证据锚点缺失 |
 
 ## 4. 它不做什么
 
@@ -135,7 +156,40 @@ cdr.admissibility       -> INADMISSIBLE
 cdr.violated_conditions -> ['same_task_id', 'same_model', 'single_variable_isolation']
 ```
 
-`cdr.to_dict()` 输出完整 CDR（经 schema 校验）。
+`cdr.to_dict()` 输出完整 CDR（经 schema 校验）。上面快速开始调用的完整 CDR——真实输出：
+
+```json
+{
+  "case_id": "demo",
+  "requested_claim": "score_comparison",
+  "comparison_scope": "2 records; models=['m1']; harnesses=['h1', 'h2']",
+  "admissibility": "PARTIAL",
+  "satisfied_conditions": [
+    "same_task_id",
+    "same_model",
+    "single_variable_isolation",
+    "continuous_score_preserved({'range': '0..1', 'unit': 'fraction', 'verifier': 'source'})"
+  ],
+  "violated_conditions": [
+    "zero_semantics_uniform(verified_zero != unresolved_zero)"
+  ],
+  "unknown_conditions": [],
+  "supported_claims": [
+    "per_status_stratified_rate(verified_zero/unresolved_zero 分列)"
+  ],
+  "unsupported_claims": [
+    "pooled_fail_rate(0 分语义混同)"
+  ],
+  "evidence_refs": [
+    "rec:t1/m1/h1",
+    "rec:t1/m1/h2"
+  ],
+  "policy_version": "cmp/0.3.1",
+  "limitations": [
+    "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
+  ]
+}
+```
 
 ## 9. 架构
 
@@ -147,6 +201,20 @@ src/agent_comparability/data/    ← SPEC + schema + 冻结案例（随包分发
 conformance/                     ← run_suite.py（三指标）+ independent_impl.py + 案例
 adapters/                        ← 可选 inspect-ai / pydantic-evals 封装
 tests/                           ← 冒烟 + 属性测试
+```
+
+判定流程（优先级顺序，依据 [SPEC §3.3](spec/SPEC.md)）：
+
+```mermaid
+flowchart LR
+    A[记录 + 请求结论] --> B{轨迹可用?}
+    B -- 缺失 --> C[INCONCLUSIVE]
+    B -- 可用 --> D{任务/模型/<br/>评分尺度一致?}
+    D -- 冲突 --> E[INADMISSIBLE]
+    D -- 一致 --> F{零分语义统一?}
+    F -- verified 与 unresolved 混同 --> G[PARTIAL]
+    F -- 统一 --> H[ADMISSIBLE]
+    C & E & G & H --> V[CDR<br/>允许+禁止的结论]
 ```
 
 ## 10. 一致性套件
@@ -178,6 +246,39 @@ pip install -e .[pydantic] && python adapters/pydantic_adapter.py
 - 单写信任域：摘要一致仅证明未分叉，不证明抗篡改（SPEC §1）
 - 判定内部不含重复次数/成本建模（由调用方处理）
 - 中英文文档保持信息等价；翻译漂移由 CI 链接检查跟踪
+
+## 常见问题
+
+**通过一致性套件是否证明我的 Agent 可靠？**
+不。它证明的是某个*实现*符合规范，对任何 Agent 不作任何陈述。
+
+**能与我现有的评测框架一起用吗？**
+能。核心与框架无关（`adjudicate()` 是对记录字典的纯函数）。内置 Inspect AI 与
+Pydantic Evals 适配器；任何能映射到[记录结构](spec/SPEC.md#0-范围与目的)的框架都可用。
+
+**为什么不直接比较分数？**
+因为 `0.0` 可能是*已验证的失败*也可能是*未解出的零分*；因为模型与 Harness 同时
+变化会把双变量差异变成无根据的因果结论；因为轨迹缺失会悄然抬高成功率。第 2 节的
+失效模式都来自真实数据，不是假设。
+
+**它会运行 Agent 或基准吗？**
+不会——无网络、无凭据、无需 Docker。它只读取你传入的记录。
+
+**该依赖哪个版本？**
+包 `v0.5.0+`（此后版本线统一并由 CI 强制）；规范 `cmp/0.3.1` 独立演进——见
+[第 12 节](#12-规范与版本)。
+
+## 项目状态
+
+| 组件 | 状态 |
+|---|---|
+| 规范 `cmp/0.3.1` | 稳定——由冻结一致性集锚定 |
+| 结论类型 | `score_comparison`、`causal`、`descriptive_registration`（未知类型 → `INCONCLUSIVE`） |
+| 一致性案例 | 22 对冻结（A + B 集），三个分离指标，CI 全绿 |
+| 适配器 | Inspect AI ✓ · Pydantic Evals ✓ |
+| CI 门禁 | 终扫 · 双语文档 · 一致性×3 · 测试 · 发行版本 · build+twine · 包内容 |
+| 仓库治理 | `main` 受保护（PR + 必需检查），发行 tag `v*` 不可变 |
+| 分发 | 仅 GitHub 源码——**尚未发布 PyPI** |
 
 ## 14. 参与贡献
 
