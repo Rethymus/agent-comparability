@@ -12,16 +12,18 @@
 
 真实 Check Run（v0.5.0 commit fb2e06f…，github-actions app）：name = **`conformance`**，conclusion=success（含 10 步：终扫/双语文档/三指标套件/测试/版本一致性/build+twine/包内容门禁）。Required status check 即填 `conformance`。
 
-**Ruleset-1（main 保护）**：
+**Ruleset-1（main 保护）——单人维护者修订版（评审指正采纳）**：
+单人仓库下 `1 approval + no bypass` 会锁死所有自建 PR（GitHub 不允许 PR 作者自行批准）。改为：
 ```json
 {"name":"protect-main","target":"branch","enforcement":"active",
  "conditions":{"ref_name":{"include":["refs/heads/main"],"exclude":[]}},
  "rules":[{"type":"deletion"},{"type":"non_fast_forward"},
-          {"type":"pull_request","parameters":{"required_approving_review_count":1,
+          {"type":"pull_request","parameters":{"required_approving_review_count":0,
             "dismiss_stale_reviews_on_push":false,"require_code_owner_review":false,
             "require_last_push_approval":false,
-            "required_status_checks":[{**"context":"conformance"**}]}}]}
+            "required_status_checks":[{"context":"conformance"}]}}]}
 ```
+语义：main 上**必须走 PR 且 `conformance` check 必须为绿**（CI 门禁全部生效），但作者本人即可合并（0 approvals）；强推/直推/删除被拒。**升档预案**：出现独立维护者后将 `required_approving_review_count` 调回 1（一行参数），届时另获授权。
 **Ruleset-2（发行 tag 防改，保留新 tag 创建路径）**：
 ```json
 {"name":"protect-release-tags","target":"branch","enforcement":"active",
@@ -31,7 +33,14 @@
 ```
 语义：include 只匹配已创建的 v* tag push 事件；创建新 tag（新建引用）不落入 update/deletion 规则——**新版本路径保持畅通**（依据 GitHub Rulesets 语义：这些规则作用于既有引用的更新/删除）。
 
-**冲突/bypass/发布流程核查**：两 ruleset 条件集不相交（heads/tags）无冲突；均**不设 bypass**（`bypass_pull_request_allowances` 留空——维护者也无静默绕过通道）；启用后维护者发版流程 = 正常 push 新 tag（创建不受阻）→ CI 跑 tag → 全绿即发行；如需改错 tag 只能新建补丁版本（先例：v0.3.6→v0.3.7）。
+**冲突/bypass/发布流程核查**：两 ruleset 条件集不相交（heads/tags）无冲突；均**不设 bypass**（维护者也无静默绕过通道；单人可合并性由 0-approval 参数而非 bypass 实现——不产生绕过通道）；启用后维护者发版流程 = 正常 push 新 tag（创建不受阻）→ CI 跑 tag → 全绿即发行；如需改错 tag 只能新建补丁版本（先例：v0.3.6→v0.3.7）。
+
+**启用后四项验证计划（授权 A 后执行，全部使用临时引用、验证完即删，不动正式引用）**：
+1. **失败 PR 无法合并**：从 main 拉 `verify/fail-pr` 分支，注入毒 import（先例 tmp/gate-proof），开 PR → CI 红 → 断言 merge API 返回 403（required status checks 未满足）。
+2. **正常 PR 可合并**：`verify/pass-pr` 分支做无害文档改动，开 PR → CI 绿（conformance check success）→ 0-approval 下作者 merge 成功 → 断言 main 前进。
+3. **已有 Tag 受保护**：对既有 tag（用 v0.3.6 做测试对象前先请示，或先打一个 `v9.9.9-verify` 牺牲tag）尝试 `git push --force` 与删除 → 断言两者均被拒（HTTP 403/规则拦截）→ 牺牲tag 若创建成功则保留为受保护状态（不删，避免"删除成功"污染验证语义；如所有者允许删除则删）。
+4. **新版本 Tag 可创建**：push 一个新 tag `v0.0.0-verify-newtag` → 断言创建成功（规则只拦 update/delete）→ 请示后删除该验证 tag。
+   *预算：全部为 GitHub-hosted 免费额度内 CI 分钟（每 run ~30s），无付费资源。*
 
 ## 三、远程完整引用安全审计
 
