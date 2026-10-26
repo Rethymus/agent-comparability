@@ -1,8 +1,12 @@
-[English](README.md) | [简体中文](README.zh-CN.md)
+<div align="center">
 
 # Agent Comparability — Experimental Specification & Conformance Suite
 
 **When can you compare AI agent evaluation results — and what claims do they support?**
+
+**English** | [简体中文](README.zh-CN.md)
+
+</div>
 
 ## 1. Project Overview
 

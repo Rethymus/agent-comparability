@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased (post-publication validation fixes)
+## Unreleased
+- README language switcher redesigned after surveying popular bilingual OSS repos
+  (pattern adopted from vue-element-admin): moved below the centered title block,
+  active language rendered bold non-link, other language linked; check_docs now
+  enforces the pattern (position, active/inactive roles, centered block)
+
+## Post-publication validation fixes (2026-10-26)
 - P0: README clone commands now use the real repo URL (EN + 简体中文)
 - P0: run_suite treats integration metric NOT-EXECUTED (deps missing/adapter
   exception) as FAIL with non-zero exit (same defect family as N2); CI now

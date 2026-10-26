@@ -1,8 +1,12 @@
-[English](README.md) | [简体中文](README.zh-CN.md)
+<div align="center">
 
 # Agent Comparability — 实验性规范与一致性测试套件
 
 **什么时候可以比较 AI Agent 的评测结果——它们又能支持什么结论？**
+
+[English](README.md) | **简体中文**
+
+</div>
 
 ## 1. 项目概览
 
