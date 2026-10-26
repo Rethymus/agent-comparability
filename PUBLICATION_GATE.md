@@ -67,11 +67,11 @@
 | # | 动作 | 就绪状态 |
 |---|---|---|
 | A | 写入上述两个 Rulesets（active） | **已完成（2026-10-26）**：protect-main id=25851004（deletion+non_ff+PR(0 approvals,无隐式审批,含 require_extra_approval_for_unattributed_changes=false)+required_status_checks=conformance）、protect-release-tags id=25851119（target=**tag**，deletion+non_ff+update，refs/tags/v*）。实施中发现并修正两处 API 事实：①pull_request 规则不接受内嵌 required_status_checks，须用独立 required_status_checks 规则类型；②tag 规则须 target="tag" 而非 "branch"（否则模式被判非法）。验证：直接 push main 被拒（"push declined due to repository rule violations"）✓；读回 enforcement=active 无 bypass ✓ |
-| B | Topics 写入（建议 llm-agents/evaluation/specification/conformance-testing）+ About 核对 | 值已备 |
+| B | Topics 写入 + About 核对 | **已完成（2026-10-26）**：description="Portable comparison semantics and conformance tests for AI agent evaluations."（owner 指定文案）；topics=ai-agents/agent-evaluation/conformance-testing/specification/reliability（API 读回五项确认，以仓库实际功能为准） |
 | C | 仓库转 Public | 安全审计全绿；建议先 A+B、并自行过目 2 个失败 run 链接 |
 | D | GitHub Release（v0.5.0） | 依赖 C（或私有 Release 亦可，需明示） |
 | E | PyPI（Trusted Publishing） | 包已 build+twine 校验；名称曾核实可用（发布日需重验） |
 
 ## 五、PUBLICATION_GATE 判定
 
-**PASS_WITH_PENDING_AUTHORIZATIONS** —— 无任何阻断公开的技术或安全问题（全引用 blob 级审计 0 敏感/0 二进制、Artifacts 0、失败 run 无日志实体、元数据准确）；四项远程配置变更（A–D）与 PyPI（E）按第 4 节分离等待所有者逐项授权。本文档之后项目转入正常 Issue/PR 维护。
+**PASS_WITH_PENDING_AUTHORIZATIONS**（更新：A_ACCEPTED / GOVERNANCE_ENFORCED——两 rulesets active 且 PR #1 实测全链路；B 完成；仅 C/D/E 待 owner 逐项授权） —— 无任何阻断公开的技术或安全问题（全引用 blob 级审计 0 敏感/0 二进制、Artifacts 0、失败 run 无日志实体、元数据准确）；四项远程配置变更（A–D）与 PyPI（E）按第 4 节分离等待所有者逐项授权。本文档之后项目转入正常 Issue/PR 维护。
