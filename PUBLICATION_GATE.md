@@ -66,7 +66,7 @@
 
 | # | 动作 | 就绪状态 |
 |---|---|---|
-| A | 写入上述两个 Rulesets（active） | 配置在案第二节，一条 API each |
+| A | 写入上述两个 Rulesets（active） | **已完成（2026-10-26）**：protect-main id=25851004（deletion+non_ff+PR(0 approvals,无隐式审批,含 require_extra_approval_for_unattributed_changes=false)+required_status_checks=conformance）、protect-release-tags id=25851119（target=**tag**，deletion+non_ff+update，refs/tags/v*）。实施中发现并修正两处 API 事实：①pull_request 规则不接受内嵌 required_status_checks，须用独立 required_status_checks 规则类型；②tag 规则须 target="tag" 而非 "branch"（否则模式被判非法）。验证：直接 push main 被拒（"push declined due to repository rule violations"）✓；读回 enforcement=active 无 bypass ✓ |
 | B | Topics 写入（建议 llm-agents/evaluation/specification/conformance-testing）+ About 核对 | 值已备 |
 | C | 仓库转 Public | 安全审计全绿；建议先 A+B、并自行过目 2 个失败 run 链接 |
 | D | GitHub Release（v0.5.0） | 依赖 C（或私有 Release 亦可，需明示） |
