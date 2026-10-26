@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Full README revamp modeled on popular OSS patterns (surveyed: ohmyzsh collapsible
+  ToC + admonitions, vue-element-admin header/switcher, doocs/leetcode cross-link):
+  real badge row (GitHub Actions CI / Apache-2.0 / Python 3.10+ — no fabricated
+  metrics badges), collapsible table of contents, GitHub alert admonitions for
+  the not-a-certification disclaimer, failure-mode table in Problem section,
+  30-second quick path; fully mirrored in 简体中文 (information-equivalent)
 - README language switcher redesigned after surveying popular bilingual OSS repos
   (pattern adopted from vue-element-admin): moved below the centered title block,
   active language rendered bold non-link, other language linked; check_docs now

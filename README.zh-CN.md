@@ -1,39 +1,87 @@
 <div align="center">
 
-# Agent Comparability — 实验性规范与一致性测试套件
+# Agent Comparability
 
-**什么时候可以比较 AI Agent 的评测结果——它们又能支持什么结论？**
+**面向 AI Agent 评测可比较性的实验性规范与一致性测试套件**
+
+[![CI](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml/badge.svg)](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 
 [English](README.md) | **简体中文**
 
+*什么时候可以比较 AI Agent 的评测结果——它们又能支持什么结论？*
+
 </div>
+
+---
+
+> [!IMPORTANT]
+> 本项目裁决的是**评测记录的可比较性**——它**不**运行 Agent、不跑基准、不对任何 Agent
+> 的可靠性作认证。一致性套件通过，仅代表*规范*一致性，仅此而已。
+
+**30 秒路径**：[安装](#6-安装) → [快速开始](#7-快速开始) →
+[真实输入/输出](#8-输入输出示例真实输出)。
+
+<details open>
+<summary><b>目录</b></summary>
+
+1. [项目概览](#1-项目概览)
+2. [问题与动机](#2-问题与动机)
+3. [它做什么](#3-它做什么)
+4. [它不做什么](#4-它不做什么)
+5. [主要特性](#5-主要特性)
+6. [安装](#6-安装)
+7. [快速开始](#7-快速开始)
+8. [输入/输出示例（真实输出）](#8-输入输出示例真实输出)
+9. [架构](#9-架构)
+10. [一致性套件](#10-一致性套件)
+11. [Inspect AI / Pydantic Evals 集成](#11-inspect-ai--pydantic-evals-集成)
+12. [规范与版本](#12-规范与版本)
+13. [局限](#13-局限)
+14. [参与贡献](#14-参与贡献)
+15. [安全](#15-安全)
+16. [许可与致谢](#16-许可与致谢)
+
+</details>
+
+---
 
 ## 1. 项目概览
 
-Agent Comparability 是一套与框架无关的**规范**（`spec/SPEC.md`）、冻结的**一致性测试套件**和极薄的**参考实现**，它裁决的是 Agent 评测记录的*可比性*——从不为分数本身评分。
+Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/SPEC.md)）、冻结的**一致性测试套件**和极薄的**参考实现**，它裁决的是 Agent 评测记录的*可比性*——从不为分数本身评分。
 
 ## 2. 问题与动机
 
-Agent 排名会随 Harness 反转；分数混同语义（*已验证的失败*与*未解出的零分*都显示 `0.0`）；轨迹缺失会悄然抬高成功率；两个变量同时变化却有人宣称因果关系。在比较结果之前，你需要机器可校验地知道**证据支持什么**。
+三种失效模式在悄然腐蚀 Agent 评测结论：
+
+| 失效模式 | 实际发生了什么 |
+|---|---|
+| **语义混同** | *已验证的失败*与*未解出的零分*都显示 `0.0`——合并后的"失败率"失去意义 |
+| **变量混淆** | 模型与 Harness 同时变化——双变量差异被当成因果结论报告 |
+| **证据缺口** | 轨迹缺失悄然抬高成功率；排名随 Harness 反转 |
+
+这些边界应当**机器可校验**，而非凭感觉——这正是本项目交付的东西。
 
 ## 3. 它做什么
 
-- 针对一组评测记录裁决**请求结论**（如 `score_compare`、`causal`、`descriptive_registration`）
+- 针对一组评测记录裁决**请求结论**（如 `score_comparison`、`causal`、`descriptive_registration`）
 - 返回**比较决策记录（CDR）**：可采纳性（`ADMISSIBLE / INADMISSIBLE / PARTIAL / INCONCLUSIVE`）、满足/违反/未知条件、**允许的结论与禁止的结论**、证据引用、规范版本
 - 强制证据信任分层（Agent 自报 / 来源验证器 / 独立复验）、评分尺度一致性（范围/单位/验证器）、零分语义拆分、未知字段与未知结论规则
 - 内置冻结一致性套件，按三个分离指标运行
 
 ## 4. 它不做什么
 
-- **不**运行 Agent、基准或模型；无网络、无凭据
-- **不**为任何东西评分、**不**认证任何 Agent 的可靠性——套件通过是*规范*一致性，不是可靠性评级
-- 不把三个指标合并成一个数字（见第 10 节）
+> [!WARNING]
+> - **不**运行 Agent、基准或模型；无网络、无凭据、无需 Docker
+> - **不**为任何东西评分、**不**认证任何 Agent 的可靠性
+> - 绝不把三个一致性指标合并成一个数字（见[第 10 节](#10-一致性套件)）
 
 ## 5. 主要特性
 
 - `adjudicate(records, requested_claim) -> CDR`——纯 Python、零依赖
 - 优先级排序的判定表（证据缺失 > 条件混淆 > 语义分裂 > 可采纳）
-- 机器可校验的 CDR JSON Schema（`spec/cdr.schema.json`）
+- 机器可校验的 CDR JSON Schema（[spec/cdr.schema.json](spec/cdr.schema.json)）
 - 冻结的 A/B 一致性案例集；B5 公开勘误先例受保护
 - 可选的 Inspect AI 与 Pydantic Evals 适配器复用同一核心
 
@@ -63,6 +111,8 @@ cdr = adjudicate({"id": "demo", "records": [
 ```
 
 ## 8. 输入/输出示例（真实输出）
+
+> 注：参考实现的条件/结论消息当前为中文；可采纳性判定本身与语言无关。
 
 上面的调用返回：
 
@@ -120,7 +170,7 @@ pip install -e .[pydantic] && python adapters/pydantic_adapter.py
 
 ## 12. 规范与版本
 
-三条独立版本线：软件 tag（如 `v0.4.0`）、规范 `cmp/0.3.1`（在 SPEC 内）、`agent_comparability.__version__`。判定表变更须规范升 major（SPEC §5）。完整 tag 谱系见 CHANGELOG（v0.3.1–v0.3.6 为保留不动的废弃候选）。
+三条独立版本线：软件 tag（如 `v0.5.0`）、规范 `cmp/0.3.1`（在 SPEC 内）、`agent_comparability.__version__`。判定表变更须规范升 major（SPEC §5）。完整 tag 谱系见 [CHANGELOG](CHANGELOG.md)（v0.3.1–v0.3.6 为保留不动的废弃候选）。
 
 ## 13. 局限
 
