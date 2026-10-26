@@ -21,6 +21,17 @@ for f, name in [(en, "en"), (zh, "zh")]:
 # 双语互链
 if "[简体中文](README.zh-CN.md)" not in en: errs.append("en 缺中文切换链接")
 if "[English](README.md)" not in zh: errs.append("zh 缺英文切换链接")
+# 英文 README 中文内容策略：实际输出含中文（真实行为），必须带本地化说明
+import re as _re
+cjk = _re.compile(r"[一-鿿]")
+if cjk.search(en) and "currently in Chinese" not in en:
+    errs.append("en: 含中文片段但缺本地化说明（'output messages are currently in Chinese'）")
+# 双语关键语义标记等量（四类 admissibility + 关键主张词）
+for tok in ["ADMISSIBLE", "INADMISSIBLE", "PARTIAL", "INCONCLUSIVE",
+            "score_comparison", "descriptive_registration", "causal"]:
+    ce, cz = en.count(tok), zh.count(tok)
+    if tok in ("ADMISSIBLE", "INCONCLUSIVE") and (ce == 0 or cz == 0):
+        errs.append(f"关键标记缺失: {tok} en={ce} zh={cz}")
 # PyPI 误导命令
 for f, name in [(en, "en"), (zh, "zh")]:
     if re.search(r"pip install (?!-e)[a-z-]+comparability", f):

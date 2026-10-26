@@ -21,7 +21,7 @@ def test_missing_trace_never_counts_and_keeps_score(seed):
     rng = random.Random(seed)
     recs = [rec("t", rng.choice("abc"), rng.choice("xy"), rng.random(),
                 rng.choice(STATUSES), trajectory_available=False)]
-    cdr = adjudicate({"id": "p", "records": recs}, "score_compare")
+    cdr = adjudicate({"id": "p", "records": recs}, "score_comparison")
     assert cdr.admissibility == "INCONCLUSIVE"          # 优先级 1
     assert any("retained" in u for u in cdr.unknown_conditions)  # 评分保留不删
 
@@ -39,7 +39,7 @@ def test_higher_priority_verdict_never_erases_registered_violations(seed):
     rng = random.Random(seed)
     recs = [rec("a", "h1", "m1", 1.0, "verified"),
             rec("b", "h2", "m2", 0.0, "unresolved_zero", trajectory_available=False)]
-    cdr = adjudicate({"id": "p", "records": recs}, "score_compare")
+    cdr = adjudicate({"id": "p", "records": recs}, "score_comparison")
     assert cdr.admissibility == "INCONCLUSIVE"
     viol = {v.split("(")[0] for v in cdr.violated_conditions}
     assert {"same_task_id", "same_model", "single_variable_isolation",

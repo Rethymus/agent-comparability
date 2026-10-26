@@ -32,7 +32,7 @@
 | 类型 | 语义 |
 |---|---|
 | `causal` | 断言某变量（模型/Harness）**导致**了分数差异 |
-| `score_comparison` | 请求对连续分数做（并排或汇总）比较 |
+| `score_comparison` | 请求对连续分数做（并排或汇总）比较。历史冻结案例集使用早期写法 `score_compare`；参考实现通过下划线归一化与关键词匹配接受两者（实现细节，非规范语义），新代码应一律使用 `score_comparison`。 |
 | `descriptive_registration` | 仅登记条件与分数，不作比较结论 |
 | 其他 | **未支持类型** |
 
