@@ -86,6 +86,8 @@ Three failure modes silently corrupt agent-evaluation conclusions:
 | **Evidence gaps** | Missing traces quietly inflate success rates; rankings reverse across harnesses |
 
 These boundaries should be **machine-checkable**, not vibes. That is what this project ships.
+How this relates to benchmark-rigor and transcript-audit work (verified literature anchors):
+see [docs/positioning.md](docs/positioning.md).
 
 ## 3. What Agent Comparability Does
 
