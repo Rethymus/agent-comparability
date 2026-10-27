@@ -94,7 +94,8 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(
         prog="python -m agent_comparability.inspect_log",
         description="Inspect AI EvalLog → cmp 记录 → CDR（官方 API；显式映射政策，禁止静默猜测）")
-    p.add_argument("log", help="Inspect .eval 日志文件路径")
+    p.add_argument("log", nargs="+",
+                   help="Inspect .eval 日志路径（一个或多个；多日志=同 task-label 断言下的跨日志比较）")
     p.add_argument("--claim", required=True, help="请求结论类型（同核心 CLI）")
     p.add_argument("--status", help="reward_status 的操作者显式断言（必填：源日志不含验证层）")
     p.add_argument("--scorer", help="多 scorer 日志必须显式指定；单 scorer 自动选用")
@@ -103,7 +104,7 @@ def main(argv=None) -> int:
     p.add_argument("--task-label", dest="task_label",
                    help="任务身份标签（跨日志比较同一任务时必须显式断言）")
     p.add_argument("--harness-name", dest="harness", default="inspect-ai",
-                   help="harness 标签（默认 inspect-ai）")
+                   help="harness 标签（默认 inspect-ai；多日志可用逗号分隔逐日志赋值，数量须匹配）")
     p.add_argument("--full-read", action="store_true",
                    help="全量读取样本以观察轨迹（默认仅 header+summaries，不声明轨迹状态）")
     p.add_argument("-o", "--output", help="CDR 输出文件（缺省 stdout）")
@@ -122,6 +123,14 @@ def main(argv=None) -> int:
             print(f"error: {e}", file=sys.stderr)
             return 2
 
+    harnesses = [h.strip() for h in args.harness.split(",")]
+    if len(harnesses) not in (1, len(args.log)):
+        print(f"error: --harness-name 提供了 {len(harnesses)} 个标签，但日志数为 {len(args.log)}"
+              f"（须为 1 个或与日志数一致）", file=sys.stderr)
+        return 2
+    if len(harnesses) == 1:
+        harnesses = harnesses * len(args.log)
+
     try:
         import inspect_ai  # noqa: F401
         from inspect_ai.log import read_eval_log, read_eval_log_sample_summaries
@@ -130,71 +139,104 @@ def main(argv=None) -> int:
               file=sys.stderr)
         return 2
 
-    try:
-        hdr = read_eval_log(args.log, header_only=True)
-        summaries = read_eval_log_sample_summaries(args.log)
-    except Exception as e:  # 官方 API 对损坏/不存在文件的各类异常 → 统一诊断
-        print(f"error: 无法读取日志 {args.log}: {type(e).__name__}: {e}", file=sys.stderr)
-        return 2
-
-    usable = [s for s in summaries if not getattr(s, "error", None) and s.completed is not False]
-    if not usable:
-        print(f"error: 日志无可用样本（{len(summaries)} 条全部 error/未完成）——不编造记录", file=sys.stderr)
-        return 2
-    scorer_names = sorted({k for s in usable for k in (s.scores or {})})
-    if args.scorer:
-        if args.scorer not in scorer_names:
-            print(f"error: 日志中不存在 scorer '{args.scorer}'（可用：{scorer_names}）", file=sys.stderr)
-            return 2
-        scorer = args.scorer
-    elif len(scorer_names) == 1:
-        scorer = scorer_names[0]
-    else:
-        print(f"error: 多 scorer（{scorer_names}）——必须显式 --scorer，禁止静默选择", file=sys.stderr)
-        return 2
-
     conv_warnings = []
-    if args.task_label:
-        task_label, src = args.task_label, "operator_override(跨日志比较的显式断言)"
-    elif hdr.eval.dataset and hdr.eval.dataset.name:
-        task_label, src = hdr.eval.dataset.name, "header.eval.dataset.name"
-    else:
-        task_label = f"run-{hdr.eval.task_id}"
-        src = "header.eval.task_id(运行级哈希——跨日志比较需 --task-label 显式断言同一任务)"
-    conv_warnings.append(f"task_identity_source={src}")
-    conv_warnings.append(f"reward_status_asserted_by_operator(--status {args.status}；源日志不含验证层——未猜测)")
-    conv_warnings.append(f"scorer_selected({scorer})")
-    if len(usable) < len(summaries):
-        conv_warnings.append(f"skipped_error_samples({len(summaries) - len(usable)} 条 error/未完成——不编造 reward)")
+    merged_records = []
+    artifacts = {}
+    eval_ids = []
+    scorer_seen = None
+    n_skipped = 0
+    for log_path in args.log:
+        try:
+            hdr = read_eval_log(log_path, header_only=True)
+            summaries = read_eval_log_sample_summaries(log_path)
+        except Exception as e:  # 官方 API 对损坏/不存在文件的各类异常 → 统一诊断
+            print(f"error: 无法读取日志 {log_path}: {type(e).__name__}: {e}", file=sys.stderr)
+            return 2
+        usable = [s for s in summaries if not getattr(s, "error", None) and s.completed is not False]
+        if not usable:
+            print(f"error: 日志无可用样本（{log_path}：{len(summaries)} 条全部 error/未完成）——不编造记录",
+                  file=sys.stderr)
+            return 2
+        scorer_names = sorted({k for s in usable for k in (s.scores or {})})
+        if args.scorer:
+            if args.scorer not in scorer_names:
+                print(f"error: 日志 {log_path} 不存在 scorer '{args.scorer}'（可用：{scorer_names}）",
+                      file=sys.stderr)
+                return 2
+            scorer = args.scorer
+        elif len(scorer_names) == 1:
+            scorer = scorer_names[0]
+        else:
+            print(f"error: 日志 {log_path} 多 scorer（{scorer_names}）——必须显式 --scorer，禁止静默选择",
+                  file=sys.stderr)
+            return 2
+        if scorer_seen is None:
+            scorer_seen = scorer
+        elif scorer != scorer_seen:
+            print(f"error: 跨日志 scorer 不一致（{log_path} 为 '{scorer}'，先前为 '{scorer_seen}'）"
+                  f"——拒绝混合不同 scorer 的分数", file=sys.stderr)
+            return 2
 
-    try:
-        records = records_from_summaries(summaries, scorer=scorer, status=args.status,
-                                         task_label=task_label, harness=args.harness,
-                                         score_map=score_map)
-    except MappingError as e:
-        print(f"error: {e}", file=sys.stderr)
-        return 2
-    _fill_model(records, hdr.eval.model)
-    if score_map and any(not _is_number(getattr(s.scores[scorer], "value", None)) for s in usable):
+        if args.task_label:
+            task_label, src = args.task_label, "operator_override(跨日志比较的显式断言)"
+        elif hdr.eval.dataset and hdr.eval.dataset.name:
+            task_label, src = hdr.eval.dataset.name, "header.eval.dataset.name"
+        else:
+            task_label = f"run-{hdr.eval.task_id}"
+            src = "header.eval.task_id(运行级哈希——跨日志比较需 --task-label 显式断言同一任务)"
+        if not conv_warnings or not any(w.startswith("task_identity_source=") for w in conv_warnings):
+            conv_warnings.append(f"task_identity_source={src}")
+        n_skipped += len(summaries) - len(usable)
+
+        try:
+            recs = records_from_summaries(summaries, scorer=scorer, status=args.status,
+                                          task_label=task_label, harness=harnesses[args.log.index(log_path)],
+                                          score_map=score_map)
+        except MappingError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 2
+        _fill_model(recs, hdr.eval.model)
+        for rec in recs:
+            artifacts[len(merged_records)] = log_path
+            merged_records.append(rec)
+        eval_ids.append(hdr.eval.eval_id or hdr.eval.task_id)
+
+    conv_warnings.append(f"reward_status_asserted_by_operator(--status {args.status}；源日志不含验证层——未猜测)")
+    conv_warnings.append(f"scorer_selected({scorer_seen})")
+    if len(args.log) > 1:
+        conv_warnings.append(f"multilog_merge({len(args.log)} 日志合并为单一 case；--task-label 共享断言同一任务)")
+    if n_skipped:
+        conv_warnings.append(f"skipped_error_samples({n_skipped} 条 error/未完成——不编造 reward)")
+
+    records = merged_records
+    distinct_tasks = {r["task_id"] for r in records}
+    if len(distinct_tasks) > 1:
+        conv_warnings.append(
+            f"multi_task_merge({len(distinct_tasks)} 个不同 task_id——规范要求 score_comparison "
+            f"全部记录同任务；跨题合并将被拒绝。逐题比较请用单样本日志或分题运行)")
+    if score_map:
         conv_warnings.append(f"score_map_applied({args.score_map}——字母/字符串分数经显式映射)")
 
-    case = {"id": f"inspect-evallog:{hdr.eval.eval_id or hdr.eval.task_id}", "records": records}
+    case = {"id": "inspect-evallog:" + "+".join(eval_ids), "records": records}
 
     if args.full_read:
         try:
-            full = read_eval_log(args.log)
-            by_id = {}
-            for s in full.samples:
-                by_id.setdefault(s.id, []).append(s)
-            for rec in records:
-                sid = rec["task_id"].rsplit("#", 1)[1]
-                if sid in by_id:
-                    obs = any(getattr(s, "messages", None) or getattr(s, "events", None)
-                              for s in by_id[sid])
-                    rec["trajectory_available"] = obs
+            for log_path in args.log:
+                full = read_eval_log(log_path)
+                by_id = {}
+                for s in full.samples:
+                    by_id.setdefault(str(s.id), []).append(s)
+                for rec in records:
+                    if rec.get("trajectory_available") is not None:
+                        continue
+                    sid = rec["task_id"].rsplit("#", 1)[1]
+                    if sid in by_id:
+                        obs = any(getattr(s, "messages", None) or getattr(s, "events", None)
+                                  for s in by_id[sid])
+                        rec["trajectory_available"] = obs
             conv_warnings.append("trajectory_inspected(full_read;按实察设置 trajectory_available)")
         except Exception as e:
-            print(f"error: --full-read 读取失败 {args.log}: {type(e).__name__}: {e}", file=sys.stderr)
+            print(f"error: --full-read 读取失败: {type(e).__name__}: {e}", file=sys.stderr)
             return 2
     else:
         conv_warnings.append("trajectory_not_inspected(summary_read;--full-read 可观察轨迹)")
@@ -222,7 +264,7 @@ def main(argv=None) -> int:
         from . import evidence
         m = evidence.build_manifest(case, source_kind="inspect_evallog",
                                     source_version=inspect_ai.__version__,
-                                    artifacts={i: args.log for i in range(len(records))},
+                                    artifacts=artifacts,
                                     requested_claim=args.claim,
                                     unsupported_capabilities=[
                                         "source_side_verification_unavailable",

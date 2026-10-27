@@ -36,3 +36,35 @@ python -m agent_comparability.inspect_log run.eval \
 ## English
 
 Converts an **actually-produced** Inspect AI `.eval` log into cmp records, a CDR, and an Evidence Manifest — official APIs only, never parsing internal file structure. Core rule: **no silent guessing** — `reward_status` requires an explicit `--status` operator assertion (logs carry no verification tier); non-numeric scores (e.g. `exact`'s `C`/`I`) require an explicit `--score-map` or the run fails; task identity prefers an explicit `--task-label` (needed to compare the same task across logs) over `dataset.name` over the run-scoped hash; `trajectory_available` is left unset under the default summary read (never claim what wasn't observed) and set from actual observation under `--full-read`; `score_scale` is never set; error/incomplete samples are skipped and counted, never assigned a fabricated reward. Records are per-sample (`task_id = {label}#{sample.id}`) — aggregation into a single record would be a semantic guess and is rejected. Note that comparing different samples within one log correctly yields `INADMISSIBLE` (different tasks); use the same `--task-label` across logs to compare harnesses on one task. Exit codes: `0` = CDR produced (verdicts are not failures), `2` = input/mapping errors. The manifest integrates §3: per-record sha256 of the `.eval` artifact (artifact_observed), all mapping decisions recorded as warnings, `verification_tier_absent_in_source` declared unsupported.
+
+## 多日志比较（#26）
+
+```bash
+python -m agent_comparability.inspect_log run-a.eval run-b.eval \
+    --claim score_comparison --status verified \
+    --score-map C=1.0,I=0.0 --task-label my-benchmark \
+    [--harness-name harness-a,harness-b] [--manifest m.json]
+```
+
+- 多个日志在共享 `--task-label`（同一任务的显式断言）下合并为单一 case，一次裁决；
+- `--harness-name` 可逗号分隔逐日志赋值（数量须匹配；缺省全部 `inspect-ai`——**绝不虚标 harness**）；
+- 跨日志 scorer 必须一致（混合不同 scorer 的分数 → exit 2）；
+- 每记录的 manifest `artifact_ref` 指向其来源日志并分日志实算摘要；
+- **语义提示**：`score_comparison` 要求全部记录同任务。两个多样本日志整体合并（跨题池化）会因
+  `same_task_id` 被拒（INADMISSIBLE，附 `multi_task_merge` 警告）——逐题比较请用单样本日志；
+- **已知规范歧义（#27）**："仅模型不同（同任务同 harness）"的 `score_comparison` 在
+  SPEC §3.3-2（判定表，规范核心）下判 INADMISSIBLE，而 §4 变量表第 2 行写 ADMISSIBLE。
+  实现与独立实现当前均按 §3.3 执行；歧义裁决前本行为锁定并如实标注。
+
+## Multi-log comparison (English summary)
+
+Pass multiple `.eval` paths with a shared explicit `--task-label` to merge them into one
+case and one verdict; per-log harness labels via comma-separated `--harness-name` (count
+must match; default all `inspect-ai` — harness labels are never fabricated). Scorers must
+agree across logs (mixed scorers → exit 2). Each record's manifest artifact_ref points to
+its own log with per-log digests. Semantics note: `score_comparison` requires all records
+to share one task — pooling two multi-sample logs is correctly refused (INADMISSIBLE with a
+`multi_task_merge` warning); compare per-question with single-sample logs. Known spec
+ambiguity (#27): model-only variation under `score_comparison` follows SPEC §3.3-2
+(INADMISSIBLE) although the §4 summary table says ADMISSIBLE; both implementations follow
+§3.3 and the behavior is locked until the ambiguity is adjudicated.

@@ -173,3 +173,180 @@ def test_cli_manifest_verifies_clean(tmp_path):
     assert r.returncode == 0, r.stderr
     man = json.loads(m.read_text(encoding="utf-8"))
     assert verify_manifest(man) == []
+
+
+# ---------- 多日志比较入口（#26） ----------
+
+_LOG2 = None
+
+
+def real_log2(model="mockllm/model", inputs=("alt-Q1?", "alt-Q2?")) -> str:
+    """第二份真实日志：默认不同样本集；可换模型/输入构造变体。"""
+    global _LOG2
+    if _LOG2 is None:
+        from inspect_ai import Task, eval
+        from inspect_ai.dataset import Sample
+        from inspect_ai.scorer import exact
+        from inspect_ai.solver import generate
+        task = Task(dataset=[Sample(input=inputs[0], target="nope-1"),
+                             Sample(input=inputs[1], target="nope-2")],
+                    solver=[generate()], scorer=exact())
+        logs = eval(task, model=model, log_dir="./logs2")
+        assert logs[0].status == "success"
+        _LOG2 = str(logs[0].location)
+    return _LOG2
+
+
+def _var_log(model, inputs, tag):
+    """按需生成变体真实日志（不同模型/样本），不做缓存。单样本输入即单样本日志。"""
+    from inspect_ai import Task, eval
+    from inspect_ai.dataset import Sample
+    from inspect_ai.scorer import exact
+    from inspect_ai.solver import generate
+    import tempfile, pathlib
+    d = pathlib.Path(tempfile.mkdtemp(prefix=f"var-{tag}-"))
+    task = Task(dataset=[Sample(input=i, target="deliberately-wrong") for i in inputs],
+                solver=[generate()], scorer=exact())
+    logs = eval(task, model=model, log_dir=str(d / "logs"))
+    assert logs[0].status == "success"
+    return str(logs[0].location)
+
+
+def test_multilog_same_task_two_runs_admissible(tmp_path):
+    """同任务两次真实运行（单样本日志 ×2，同 task-label）→ ADMISSIBLE，记录数=2。"""
+    a = _var_log("mockllm/model", ("exp-Q1",), "run1")
+    b = _var_log("mockllm/model", ("exp-Q1",), "run2")
+    c = tmp_path / "case.json"
+    m = tmp_path / "m.json"
+    r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
+                 "--score-map", "C=1.0,I=0.0", "--task-label", "same-run",
+                 "--save-case", str(c), "--manifest", str(m))
+    assert r.returncode == 0, r.stderr
+    cdr = json.loads(r.stdout)
+    assert cdr["admissibility"] == "ADMISSIBLE"
+    case = json.loads(c.read_text(encoding="utf-8"))
+    assert len(case["records"]) == 2  # 1 样本 × 2 日志
+    assert {x["task_id"] for x in case["records"]} == {"same-run#1"}
+    from agent_comparability.evidence import verify_manifest
+    man = json.loads(m.read_text(encoding="utf-8"))
+    assert verify_manifest(man) == []
+    # 每记录制品指向其来源日志（两份不同日志都必须被引用）
+    refs = {e["artifact_ref"] for e in man["records"]}
+    assert len(refs) == 2
+
+
+def test_multilog_diff_model_current_normative_behavior():
+    """两单样本日志不同模型（同 harness）。
+
+    注意：此场景暴露 SPEC 自相矛盾（见歧义 Issue）——§3.3-2 判定表规定违反
+    same_model → INADMISSIBLE（实现与 independent_impl 均如此）；而 §4 变量表
+    第 2 行写"仅模型不同 → ADMISSIBLE"。歧义解决前，本测试锁定当前规范核心
+    （§3.3）行为。
+    """
+    a = _var_log("mockllm/model", ("exp-Q1",), "m1")
+    b = _var_log("mockllm/model2", ("exp-Q1",), "m2")
+    r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
+                 "--score-map", "C=1.0,I=0.0", "--task-label", "cmp-models")
+    assert r.returncode == 0, r.stderr
+    cdr = json.loads(r.stdout)
+    assert cdr["admissibility"] == "INADMISSIBLE"  # §3.3-2（判定表，规范核心）
+    assert "same_model" in cdr["violated_conditions"]
+    assert "single_variable_isolation" in cdr["satisfied_conditions"]  # 单变量未混
+
+
+def test_multilog_disjoint_sample_ids_correctly_refused(tmp_path):
+    """样本 id 集不同（1 样本 vs 2 样本日志，同 label）→ 跨任务 → INADMISSIBLE + 警告。"""
+    a = _var_log("mockllm/model", ("exp-Q1",), "d1")                 # 仅 id=1
+    b = _var_log("mockllm/model", ("exp-Q9", "exp-Q8",), "d2")       # id=1,2
+    m = tmp_path / "m.json"
+    r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
+                 "--score-map", "C=1.0,I=0.0", "--task-label", "mix", "--manifest", str(m))
+    assert r.returncode == 0, r.stderr
+    cdr = json.loads(r.stdout)
+    assert cdr["admissibility"] == "INADMISSIBLE"
+    assert "same_task_id" in cdr["violated_conditions"]
+    man = json.loads(m.read_text(encoding="utf-8"))
+    assert any("multi_task_merge" in w for w in man["mapping_warnings"])
+
+
+def test_multilog_whole_logs_pooled_refused():
+    """两个多样本日志整体合并（跨题池化）→ INADMISSIBLE——规范拒绝跨题合并比较。"""
+    a = _var_log("mockllm/model", ("exp-A1", "exp-A2"), "w1")
+    b = _var_log("mockllm/model", ("exp-A1", "exp-A2"), "w2")
+    r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
+                 "--score-map", "C=1.0,I=0.0", "--task-label", "whole")
+    assert r.returncode == 0, r.stderr
+    cdr = json.loads(r.stdout)
+    assert cdr["admissibility"] == "INADMISSIBLE"
+    assert "same_task_id" in cdr["violated_conditions"]
+
+
+def test_multilog_harness_name_count_mismatch_exit2():
+    a, b = real_log(), real_log2()
+    r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
+                 "--score-map", "C=1.0,I=0.0", "--task-label", "t",
+                 "--harness-name", "h1,h2,h3")
+    assert r.returncode == 2
+    assert "harness" in r.stderr
+
+
+def test_multilog_one_unreadable_log_exit2(tmp_path):
+    r = run_conv(str(tmp_path / "ghost.eval"), real_log(), "--claim", "score_comparison",
+                 "--status", "verified", "--score-map", "C=1.0,I=0.0")
+    assert r.returncode == 2
+    assert "ghost.eval" in r.stderr
+
+
+def test_multilog_single_log_still_works():
+    """向后兼容：单日志路径行为不变。"""
+    r = run_conv(real_log(), "--claim", "descriptive_registration",
+                 "--status", "verified", "--score-map", "C=1.0,I=0.0")
+    assert r.returncode == 0, r.stderr
+    assert json.loads(r.stdout)["admissibility"] == "ADMISSIBLE"
+
+
+# ---------- 真实多-epoch 与 --full-read 验收（#28） ----------
+
+def _epoch_log():
+    """真实 epochs=2 日志（实际运行产生；每样本 id 出现于 epoch 1/2）。"""
+    from inspect_ai import Task, eval
+    from inspect_ai.dataset import Sample
+    from inspect_ai.scorer import exact
+    from inspect_ai.solver import generate
+    import tempfile, pathlib
+    d = pathlib.Path(tempfile.mkdtemp(prefix="epoch-"))
+    task = Task(dataset=[Sample(input="ep-Q1", target="w1")], solver=[generate()], scorer=exact())
+    logs = eval(task, model="mockllm/model", log_dir=str(d / "logs"), epochs=2)
+    assert logs[0].status == "success"
+    return str(logs[0].location)
+
+
+def test_real_multiepoch_repetition_count(tmp_path):
+    """真实 epochs=2 → 每样本记录 repetition_count=2（真实数据推导，非猜测）。"""
+    c = tmp_path / "case.json"
+    r = run_conv(_epoch_log(), "--claim", "descriptive_registration",
+                 "--status", "verified", "--score-map", "C=1.0,I=0.0",
+                 "--task-label", "ep", "--save-case", str(c))
+    assert r.returncode == 0, r.stderr
+    case = json.loads(c.read_text(encoding="utf-8"))
+    assert len(case["records"]) == 2  # 1 样本 × 2 epoch
+    assert all(x["repetition_count"] == 2 for x in case["records"])
+
+
+def test_real_full_read_trajectory_observed(tmp_path):
+    """--full-read：实察 messages/events → trajectory_available=true（默认读不声明）。"""
+    log = _epoch_log()
+    c = tmp_path / "case.json"
+    r = run_conv(log, "--claim", "descriptive_registration",
+                 "--status", "verified", "--score-map", "C=1.0,I=0.0",
+                 "--task-label", "ep", "--full-read", "--save-case", str(c))
+    assert r.returncode == 0, r.stderr
+    case = json.loads(c.read_text(encoding="utf-8"))
+    assert all(x.get("trajectory_available") is True for x in case["records"])
+    # 对照：默认 summary 读不声明
+    c2 = tmp_path / "case2.json"
+    r2 = run_conv(log, "--claim", "descriptive_registration",
+                  "--status", "verified", "--score-map", "C=1.0,I=0.0",
+                  "--task-label", "ep", "--save-case", str(c2))
+    case2 = json.loads(c2.read_text(encoding="utf-8"))
+    assert all("trajectory_available" not in x for x in case2["records"])
