@@ -1,16 +1,20 @@
-"""比较判定核心库 cmp/core（cmp/0.3.1 规范参考实现，第十九轮升级）。
+"""比较判定核心库 cmp/core（cmp/0.4.0 规范参考实现）。
 
+相对 0.3.1 的判定表分支修正（#27 裁决方向 B，SPEC §5 允许 minor 新增分支）：
+  ⑤score_comparison 的 INADMISSIBLE 触发移除 same_model——单变量对称性
+    （§4 行 2：仅模型不同 → ADMISSIBLE 并排）；模型-only 变化由
+    score_scale_consistent / zero_semantics_uniform 独立把关（D2 冻结对证明）。
 相对 0.2 的规范符合性修复（依据 SPEC 0.3.1；B 集冻结预期先于本修改存在）：
   ①同任务性检查入 score 判定优先级 2（B3 暴露 0.2 缺失）
   ②评分尺度一致性检查（含 0.3.1 隐式默认规则）（B4/B5 暴露 0.2 缺失）
   ③claim 路由补 registration/descriptive 关键词（B2-B5 暴露误判）
   ④policy_version 升 cmp/0.3.1（消费方按 SPEC §5 重判旧 CDR）
-判定优先级（SPEC §3.3）：INCONCLUSIVE(缺trace) > INADMISSIBLE(任务/模型/混淆/尺度) > PARTIAL(零语义) > ADMISSIBLE。
+判定优先级（SPEC §3.3）：INCONCLUSIVE(缺trace) > INADMISSIBLE(任务/混淆/尺度) > PARTIAL(零语义) > ADMISSIBLE。
 """
 
 from dataclasses import dataclass, field, asdict
 
-POLICY_VERSION = "cmp/0.3.1"
+POLICY_VERSION = "cmp/0.4.0"
 TAMPER_LIMITATION = "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
 DEFAULT_SCALE = {"range": "0..1", "unit": "fraction", "verifier": "source"}
 KNOWN_FIELDS = {"task_id", "harness", "model", "reward", "reward_status",
@@ -92,9 +96,10 @@ def adjudicate(case: dict, requested_claim: str) -> CDR:
             cdr.admissibility = "INCONCLUSIVE"
             cdr.supported_claims.append("score_transcription(source_verifier_attested)")
             cdr.unsupported_claims.append("success_rate(含证据缺失记录)")
-        elif len(tasks) > 1 or len(models) > 1 or confounded or "score_scale_consistent" in cdr.violated_conditions:
+        elif len(tasks) > 1 or confounded or "score_scale_consistent" in cdr.violated_conditions:
+            # 0.4：same_model 移出硬触发（#27 单变量对称性）；尺度/零语义条件独立把关
             cdr.admissibility = "INADMISSIBLE"
-            cdr.unsupported_claims.append("score_comparison(任务/模型/尺度条件冲突)")
+            cdr.unsupported_claims.append("score_comparison(任务/混淆/尺度条件冲突)")
         elif any(v.startswith("zero_semantics_uniform") for v in cdr.violated_conditions):
             cdr.admissibility = "PARTIAL"
             cdr.supported_claims.append("per_status_stratified_rate(verified_zero/unresolved_zero 分列)")

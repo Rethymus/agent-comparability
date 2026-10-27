@@ -25,8 +25,8 @@ def main() -> int:
     if expected and py_ver != expected:
         errs.append(f"pyproject {py_ver} != 发行 tag v{expected}")
     spec = (ROOT / "spec/SPEC.md").read_text(encoding="utf-8")
-    if "cmp/0.3.1" not in spec:
-        errs.append("SPEC 版本行缺失（cmp/0.3.1）")
+    if "cmp/0.4.0" not in spec:
+        errs.append("SPEC 版本行缺失（cmp/0.4.0）")
     for e in errs:
         print("RELEASE GATE FAIL:", e)
     print(f"release gate: pyproject={py_ver} runtime={rt_ver} tag=v{expected or '(未指定)'}",

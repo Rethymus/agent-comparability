@@ -101,7 +101,7 @@ def test_manifest_carries_policy_but_does_not_touch_cdr():
     case = {"id": "c", "records": [
         {"task_id": "t", "harness": "h", "model": "m", "reward": 1.0, "reward_status": "verified"}]}
     m = build_manifest(case, source_kind="x")
-    assert m["policy_version"] == "cmp/0.3.1"
+    assert m["policy_version"] == "cmp/0.4.0"
     for banned in ("admissibility", "supported_claims", "violated_conditions"):
         assert banned not in m
 

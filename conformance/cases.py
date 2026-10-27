@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "adapters"))
 from inspect_adapter import CASES as A_CASES  # A 集（历史冻结定义，不改写）
 
 _B = json.loads((ROOT / "conformance" / "boundary-cases.json").read_text(encoding="utf-8"))
+_D = json.loads((ROOT / "conformance" / "cases-0.4.json").read_text(encoding="utf-8"))
 
 
 def all_pairs():
@@ -20,6 +21,9 @@ def all_pairs():
         for claim, expected in c["claims"].items():
             pairs.append((c["id"], claim, expected, c["records"]))
     for c in _B["cases"]:
+        for claim, expected in c["claims"].items():
+            pairs.append((c["id"], claim, expected, c["records"]))
+    for c in _D["cases"]:
         for claim, expected in c["claims"].items():
             pairs.append((c["id"], claim, expected, c["records"]))
     return pairs

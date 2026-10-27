@@ -121,8 +121,8 @@ def test_N5_evaluators_check_real_task_output():
 
 
 def test_N6_adapter_verdict_from_report_all_pairs():
-    """#10 P1 回归：适配器最终判定必须来自 report（全 22 对）而非旁路循环。
-    tmp 副本注入返回错误可采纳性的 task，断言退出码非零、仍报告 22 对且判定不一致。"""
+    """#10 P1 回归：适配器最终判定必须来自 report（全 26 对 = A9+B13+D4）而非旁路循环。
+    tmp 副本注入返回错误可采纳性的 task，断言退出码非零、仍报告 26 对且判定不一致。"""
     pytest.importorskip("pydantic_evals")
     tmp = _copy_tree()
     pa = tmp / "adapters/pydantic_adapter.py"
@@ -138,7 +138,7 @@ def test_N6_adapter_verdict_from_report_all_pairs():
     shutil.rmtree(tmp, ignore_errors=True)
     assert r.returncode != 0, "错误 task 输出未传导为适配器非零退出码（N6 回归）"
     assert '"route2b_all_consistent": false' in r.stdout
-    assert '"pairs_reported": 22' in r.stdout
+    assert '"pairs_reported": 26' in r.stdout
 
 
 def test_N7_adapters_runnable_standalone_any_order():
@@ -151,12 +151,12 @@ def test_N7_adapters_runnable_standalone_any_order():
     r_pyd = _run(tmp, "adapters/pydantic_adapter.py")
     assert r_pyd.returncode == 0, "pydantic 适配器独立运行失败（N7 回归）"
     res = json.loads((tmp / "conformance/conformance-results.json").read_text(encoding="utf-8"))
-    assert res["route2b_pydantic_evaluator"]["pairs_reported"] == 22, "独立运行未报告全 22 对（N7 回归）"
+    assert res["route2b_pydantic_evaluator"]["pairs_reported"] == 26, "独立运行未报告全 26 对（N7 回归；A9+B13+D4）"
     # 反向顺序：inspect 后跑必须保留 pydantic 已写入的段落（修复前为整体覆盖写）
     r_insp = _run(tmp, "adapters/inspect_adapter.py")
     assert r_insp.returncode == 0
     res2 = json.loads((tmp / "conformance/conformance-results.json").read_text(encoding="utf-8"))
-    assert res2["route2b_pydantic_evaluator"]["pairs_reported"] == 22, \
+    assert res2["route2b_pydantic_evaluator"]["pairs_reported"] == 26, \
         "inspect 后跑覆盖了 pydantic 段（N7 回归）"
     assert "route1_reference" in res2, "inspect 自身段落缺失（N7 回归）"
     shutil.rmtree(tmp, ignore_errors=True)

@@ -4,7 +4,7 @@
 §5 未知字段/未支持 claim 规则、B5 的保守尺度规则均来自规范文本。
 """
 
-POLICY_VERSION = "cmp/0.3.1"
+POLICY_VERSION = "cmp/0.4.0"
 TAMPER = "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
 
 
@@ -60,7 +60,7 @@ def adjudicate(records, requested_claim):
             adm = "INCONCLUSIVE"   # 优先级 1
             unknown.append("source_reward_retained_but_unverifiable_by_us")
             supported, unsupported = ["score_transcription(source_verifier_attested)"], ["success_rate"]
-        elif len(tasks) > 1 or len(models) > 1 or confounded or "score_scale_consistent" in violated:
+        elif len(tasks) > 1 or confounded or "score_scale_consistent" in violated:  # 0.4：same_model 移出硬触发（#27）
             adm = "INADMISSIBLE"  # 优先级 2
             supported, unsupported = [], ["score_comparison"]
         elif multi and "score_scale_consistent" in violated:

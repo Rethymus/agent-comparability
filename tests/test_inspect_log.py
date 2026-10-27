@@ -46,7 +46,7 @@ def test_real_log_descriptive_registration_admissible(tmp_path):
     assert r.returncode == 0, r.stderr
     cdr = json.loads(r.stdout)
     assert cdr["admissibility"] == "ADMISSIBLE"
-    assert cdr["policy_version"] == "cmp/0.3.1"
+    assert cdr["policy_version"] == "cmp/0.4.0"
     man = json.loads(m.read_text(encoding="utf-8"))
     assert man["source_kind"] == "inspect_evallog"
     assert man["source_version"]
@@ -235,13 +235,12 @@ def test_multilog_same_task_two_runs_admissible(tmp_path):
     assert len(refs) == 2
 
 
-def test_multilog_diff_model_current_normative_behavior():
-    """两单样本日志不同模型（同 harness）。
+def test_multilog_diff_model_admissible_under_0_4():
+    """两单样本日志不同模型（同 harness）→ 仅模型不同 → ADMISSIBLE（cmp/0.4 单变量对称性，#27 裁决 B）。
 
-    注意：此场景暴露 SPEC 自相矛盾（见歧义 Issue）——§3.3-2 判定表规定违反
-    same_model → INADMISSIBLE（实现与 independent_impl 均如此）；而 §4 变量表
-    第 2 行写"仅模型不同 → ADMISSIBLE"。歧义解决前，本测试锁定当前规范核心
-    （§3.3）行为。
+    0.3.1 时代此场景判 INADMISSIBLE（§3.3-2 把 same_model 列为硬触发）；0.4.0 依 §4 行 2
+    语义修正——模型-only 比较由尺度/零语义条件独立把关。same_model 仍在 violated_conditions
+    中如实记录（信息项，不再触发裁决）。
     """
     a = _var_log("mockllm/model", ("exp-Q1",), "m1")
     b = _var_log("mockllm/model2", ("exp-Q1",), "m2")
@@ -249,9 +248,10 @@ def test_multilog_diff_model_current_normative_behavior():
                  "--score-map", "C=1.0,I=0.0", "--task-label", "cmp-models")
     assert r.returncode == 0, r.stderr
     cdr = json.loads(r.stdout)
-    assert cdr["admissibility"] == "INADMISSIBLE"  # §3.3-2（判定表，规范核心）
-    assert "same_model" in cdr["violated_conditions"]
-    assert "single_variable_isolation" in cdr["satisfied_conditions"]  # 单变量未混
+    assert cdr["admissibility"] == "ADMISSIBLE"  # cmp/0.4.0（#27 方向 B）
+    assert "same_model" in cdr["violated_conditions"]  # 如实记录，不触发裁决
+    assert "single_variable_isolation" in cdr["satisfied_conditions"]
+    assert cdr["policy_version"] == "cmp/0.4.0"
 
 
 def test_multilog_disjoint_sample_ids_correctly_refused(tmp_path):

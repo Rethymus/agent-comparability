@@ -1,8 +1,24 @@
 # Changelog
 
 ## Unreleased
-
-- None yet.
+- (#27, direction B) Specification cmp/0.3.1 -> **cmp/0.4.0** (minor per SPEC §5:
+  adjudication-table branch change): score_comparison no longer treats a
+  same_model violation as an independent INADMISSIBLE trigger — single-variable
+  symmetry per §4 row 2 (model-only variation is now ADMISSIBLE side-by-side),
+  while score_scale_consistent / zero_semantics_uniform keep guarding
+  independently. Executed per the owner's standing strict-execution directive
+  after the evaluation memo recommended B; fully revertible in-repo; issue
+  stays open until explicit owner confirmation
+  - Frozen D-set added BEFORE implementation (conformance/cases-0.4.json,
+    following the B5 precedent — old A/B expectations untouched): D1
+    model-only -> ADMISSIBLE (+causal still INADMISSIBLE), D2 model+undeclared
+    out-of-range scale -> INADMISSIBLE (proves scale guarding is NOT relaxed);
+    all 22 pre-existing frozen pairs verified unchanged under 0.4 semantics
+    (negative-repro first: D1 failed on metric3/metric2/metric1-pydantic)
+  - core.py + conformance/independent_impl.py mirrored; cdr.schema.json
+    policy_version pattern now accepts cmp/0.3.x and cmp/0.4.x (old CDRs stay
+    schema-valid); release_gate anchor updated; bilingual README/docs version
+    mentions synced; multi-log diff-model acceptance flipped with provenance
 
 ## v0.5.3 (2026-10-27)
 - (#26) Multi-log comparison entry: `inspect_log A.eval B.eval …` merges logs under a

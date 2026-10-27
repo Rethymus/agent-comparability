@@ -1,5 +1,5 @@
 {
-  "policy_version": "cmp/0.3.1",
+  "policy_version": "cmp/0.4.0",
   "frozen_note": "案例与参考判定先于三路运行冻结",
   "cases": [
     {

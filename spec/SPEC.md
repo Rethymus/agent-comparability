@@ -1,4 +1,4 @@
-# Agent Evaluation Comparability Specification — cmp/0.3.1 (Release Candidate)
+# Agent Evaluation Comparability Specification — cmp/0.4.0 (Release Candidate)
 
 规范状态：候选规范（非行业标准、无第三方认证）。本文是判定语义的单一事实来源；参考实现（`scripts/cmp/core.py`）与一切第三方实现均以本文为准，冲突时以本文裁决。可脱离任何源码阅读。
 
@@ -67,7 +67,10 @@
 
 **`score_comparison`**（按优先级，先命中先裁决）：
 1. 违反 `trace_available` → `INCONCLUSIVE`（来源评分转录保留于 `unknown_conditions`，禁止删除）
-2. 违反 `single_variable_isolation` **或** `same_task_id` 或 `same_model` → `INADMISSIBLE`
+2. 违反 `single_variable_isolation` **或** `same_task_id` → `INADMISSIBLE`
+   （**cmp/0.4 修正（#27）**：`same_model` 不再单独触发 INADMISSIBLE——单变量对称性，与
+   §4 行 1/行 2 一致；模型-only 变化由 `score_scale_consistent`/`zero_semantics_uniform`
+   独立把关。0.3.x 行为见版本记录。）
 3. 违反 `score_scale_consistent` → `INADMISSIBLE`
 4. 违反 `zero_semantics_uniform` → `PARTIAL`（支持按 verified/unresolved 分列的率；禁止合并 fail 率）
 5. 其余 → `ADMISSIBLE`（同尺度连续分数并排）
@@ -95,7 +98,7 @@
 
 - **未知字段**：Record 中规范未定义的字段**必须忽略**（不得报错、不得猜测），并在 `unknown_conditions` 记 `ignored_fields:[...]`。
 - **未支持 Claim**：见 §2 —— INCONCLUSIVE + `unrecognized_claim_type`，禁止近似匹配。
-- **Policy 版本**：CDR 必须携带 `policy_version`。消费方遇到 `policy_version` 不认识时**必须丢弃该 CDR 并重新判定**，不得部分信任。本规范为 `cmp/0.3.1`（0.3 的澄清版：仅补隐式默认尺度规则，判定表未变）。
+- **Policy 版本**：CDR 必须携带 `policy_version`。消费方遇到 `policy_version` 不认识时**必须丢弃该 CDR 并重新判定**，不得部分信任。本规范为 `cmp/0.4.0`（0.3→0.4：判定表分支修正——score_comparison 的 INADMISSIBLE 触发移除 `same_model`，实现单变量对称性，裁决记录见 #27；D 冻结对（D1/D2）先于实现冻结）。0.3.1 为 0.3 的澄清版（仅补隐式默认尺度规则）。
 - **规范不兼容变更**：升 minor（0.3→0.4）可新增判定分支；改判定表必须升 major 并迁移案例。
 
 ---

@@ -233,7 +233,7 @@ CDR — actual output:
     "rec:t1/m1/h1",
     "rec:t1/m1/h2"
   ],
-  "policy_version": "cmp/0.3.1",
+  "policy_version": "cmp/0.4.0",
   "limitations": [
     "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
   ]
@@ -299,7 +299,7 @@ For **real Inspect EvalLog files** (not frozen cases) use the converter:
 
 ## 12. Specification & Versioning
 
-Three distinct lines: software tag (e.g. `v0.5.0`), specification `cmp/0.3.1`
+Three distinct lines: software tag (e.g. `v0.5.0`), specification `cmp/0.4.0`
 (inside SPEC), and `agent_comparability.__version__`. Judgment-table changes
 require a spec major bump (SPEC §5). See [CHANGELOG](CHANGELOG.md) for the full tag lineage
 (v0.3.1–v0.3.6 are deprecated candidates kept immutably for the record).
@@ -333,13 +333,13 @@ No — no network, no credentials, no Docker. It only ever sees the records you 
 
 **Which versions should I depend on?**
 Package `v0.5.0+` (version lines unified and CI-enforced since then); specification
-`cmp/0.3.1` evolves independently — see [§12](#12-specification--versioning).
+`cmp/0.4.0` evolves independently — see [§12](#12-specification--versioning).
 
 ## Project status
 
 | Component | Status |
 |---|---|
-| Specification `cmp/0.3.1` | Stable — frozen conformance set anchors it |
+| Specification `cmp/0.4.0` | Stable — frozen conformance set anchors it |
 | Claim types | `score_comparison`, `causal`, `descriptive_registration` (+ unknown → `INCONCLUSIVE`) |
 | Conformance cases | 22 frozen pairs (A + B sets), three separated metrics, all green in CI |
 | Adapters | Inspect AI ✓ · Pydantic Evals ✓ |
