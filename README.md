@@ -139,6 +139,22 @@ Requires Python ≥ 3.10. No Docker, no model keys.
 
 ## 7. Quickstart
 
+**Command line** (offline, zero extra dependencies — input contract below):
+
+```bash
+python -m agent_comparability examples/demo-case.json --claim score_comparison
+# → CDR JSON on stdout (exit 0). INADMISSIBLE / PARTIAL / INCONCLUSIVE are verdicts,
+#   not program failures. Invalid input (bad JSON / missing or mistyped fields) →
+#   exit 2 with a path-precise diagnostic — never silently converted into a verdict.
+#   -o cdr.json writes to a file instead. The demo case is SYNTHETIC/illustrative.
+```
+
+Input contract (`{"id": str, "records": [{"task_id", "harness", "model", "reward":
+number, "reward_status", ...optional}]}`); unknown record fields are ignored and
+recorded in `unknown_conditions` (SPEC §5).
+
+**Python API**:
+
 ```python
 from agent_comparability import adjudicate
 

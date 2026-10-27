@@ -1,0 +1,10 @@
+{
+  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. Fields follow the cmp/0.3.1 record contract; see README §7.",
+  "id": "demo-synthetic-001",
+  "records": [
+    {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",
+     "reward": 0.85, "reward_status": "verified"},
+    {"task_id": "demo-task", "harness": "harness-b", "model": "model-x",
+     "reward": 0.60, "reward_status": "verified"}
+  ]
+}

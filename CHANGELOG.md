@@ -1,8 +1,16 @@
 # Changelog
 
 ## Unreleased
-
-- None yet.
+- (#16) Offline JSON → CDR CLI closure (`python -m agent_comparability input.json
+  --claim <type> [-o out.json]`): zero extra runtime dependencies (stdlib argparse
+  + json), reuses adjudicate() with no judgment-semantics changes; exit-code
+  contract 0 = CDR produced (all four admissibility values are verdicts, not
+  failures) / 2 = invalid input with path-precise diagnostics (never silently
+  converted into a verdict); unknown record fields stay SPEC §5 behavior (ignored
+  + recorded); contract validation covers structure/types only; bilingual usage
+  docs + SYNTHETIC-labeled demo case in examples/; 20-path test suite written
+  first as negative repro (all failed pre-implementation), clean-copy execution
+  recorded in the PR
 
 ## v0.5.2 (2026-10-26)
 - PyPI distribution debut (E phase): first published version is 0.5.2 via

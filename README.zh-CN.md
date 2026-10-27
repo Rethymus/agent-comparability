@@ -129,6 +129,22 @@ pip install -e .[suite,inspect,pydantic]  # 完整 Conformance 运行——run_s
 
 ## 7. 快速开始
 
+**命令行**（离线，零额外依赖——输入契约见下）：
+
+```bash
+python -m agent_comparability examples/demo-case.json --claim score_comparison
+# → stdout 输出 CDR JSON（exit 0）。INADMISSIBLE / PARTIAL / INCONCLUSIVE 是裁决结果，
+#   不是程序失败。无效输入（JSON 损坏/字段缺失或类型错）→ exit 2 并给出精确到
+#   字段路径的诊断——绝不被静默转换为貌似成功的裁决。
+#   -o cdr.json 改为写入文件。演示案例为合成/示意数据（SYNTHETIC/illustrative）。
+```
+
+输入契约（`{"id": str, "records": [{"task_id", "harness", "model", "reward":
+数值, "reward_status", ...可选字段}]}`）；Record 未知字段按 SPEC §5 忽略并记入
+`unknown_conditions`。
+
+**Python API**：
+
 ```python
 from agent_comparability import adjudicate
 
