@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+- None yet.
+
+## v0.5.3 (2026-10-27)
 - (#26) Multi-log comparison entry: `inspect_log A.eval B.eval …` merges logs under a
   shared explicit --task-label into one case/CDR/manifest; per-log harness labels via
   comma-separated --harness-name (count-validated; never fabricated); cross-log scorer
