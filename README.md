@@ -5,9 +5,9 @@
 **Experimental Specification & Conformance Suite** for AI agent evaluation comparability
 
 [![CI](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml/badge.svg)](https://github.com/Rethymus/agent-comparability/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![PyPI](https://img.shields.io/pypi/v/agent-comparability)](https://pypi.org/project/agent-comparability/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white&style=flat-square)](pyproject.toml)
+[![PyPI](https://img.shields.io/pypi/v/agent-comparability?style=flat-square)](https://pypi.org/project/agent-comparability/)
 
 **English** | [简体中文](README.zh-CN.md)
 
