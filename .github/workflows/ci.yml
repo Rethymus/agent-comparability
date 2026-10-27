@@ -41,7 +41,8 @@ jobs:
           python - <<'PY'
           import glob, json, tarfile, zipfile
           need = ["LICENSE", "NOTICE", "data/SPEC.md", "data/cdr.schema.json",
-                  "data/boundary-cases.json", "data/frozen-cases-a.json"]
+                  "data/boundary-cases.json", "data/frozen-cases-a.json",
+                  "data/cases-0.4.json"]
           for art in glob.glob("dist/*"):
               names = tarfile.open(art).getnames() if art.endswith(".tar.gz") else zipfile.ZipFile(art).namelist()
               missing = [x for x in need if not any(n.endswith(x) for n in names)]

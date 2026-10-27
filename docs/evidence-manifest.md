@@ -6,7 +6,7 @@
 
 ### 定位
 
-Evidence Manifest 是 **CDR 外部**的轻量记录，回答"这份输入的证据从哪来、可信到什么程度"。它与 `cmp/0.3.1` 规范的关系：
+Evidence Manifest 是 **CDR 外部**的轻量记录，回答"这份输入的证据从哪来、可信到什么程度"。它与 cmp 规范（当前 `cmp/0.4.0`）的关系：
 
 - SPEC §1 的四层（L-claim / L-src / L-ours / L-none）是**记录级评分信任**，参与判定语义；
 - Manifest 三态是**证据制品级**（evidence artifact level），是另一个维度，**不进入 `adjudicate()`、不改变任何 CDR 字段或判定结果**；`spec/SPEC.md` 与 `cdr.schema.json` 零改动。
