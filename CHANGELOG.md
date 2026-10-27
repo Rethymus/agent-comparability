@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- (#22) Real-pipeline comparative experiment 001 (`experiments/scenarios_001/`):
+  four scenarios through the actual pipeline (real .eval produced in-test via
+  mockllm -> #20 converter -> #16 CLI -> core), covering all four verdicts —
+  same-task/same-model/diff-harness ADMISSIBLE; diff-model+diff-harness
+  INADMISSIBLE (correct refusal, causal also refused); verified-vs-unresolved
+  zero PARTIAL (stratified, pooled refused); trajectory-missing INCONCLUSIVE
+  (transcription retained). Expected outcomes anchored to the SPEC §3.3/§4
+  frozen tables AND cross-checked by independent_impl — full agreement, no
+  spec ambiguity found. RECORD.md documents the 8 required fields per scenario
+  with honest labeling (real logs are mock-model artifacts, not real benchmark
+  evidence; manual-json records are synthetic); permanent regression test
+  negative-first (module absent -> 3 failed). Explicit evidence gaps recorded:
+  no third-party-harness data, no non-mock model logs
 - (#20) Inspect AI EvalLog converter (`python -m agent_comparability.inspect_log`):
   converts actually-produced .eval logs into cmp records -> CDR + Evidence
   Manifest via official APIs only (read_eval_log / sample summaries; --full-read
