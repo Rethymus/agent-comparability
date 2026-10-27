@@ -151,7 +151,9 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison
 
 Input contract (`{"id": str, "records": [{"task_id", "harness", "model", "reward":
 number, "reward_status", ...optional}]}`); unknown record fields are ignored and
-recorded in `unknown_conditions` (SPEC §5).
+recorded in `unknown_conditions` (SPEC §5). Add `--manifest out.manifest.json` to
+also emit an Evidence Manifest documenting artifact digests and evidence trust
+states (never auto-upgraded; see [docs/evidence-manifest.md](docs/evidence-manifest.md)).
 
 **Python API**:
 
