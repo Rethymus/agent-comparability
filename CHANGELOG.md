@@ -133,7 +133,8 @@ kept for the record (each superseded for a verified defect; see git history note
   metadata (v0.4.1 carried 0.4.0 inside — recorded as historical candidate defect,
   tag untouched). New `conformance/release_gate.py` enforces this on every CI run.
 - Negative gates N1–N4 converted to permanent regression tests
-  (`tests/test_gate_regressions.py`, original failure record preserved in VALIDATION.md
+  (`tests/test_gate_regressions.py`, original failure record preserved in
+  docs/internal/VALIDATION.md
   and fix commits ad14fb5/541494d). Terminal scan gained an AST-based structured
   companion (N1b) instead of expanding string rules; documented self-exclusions.
 
