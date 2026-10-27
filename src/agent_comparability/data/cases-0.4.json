@@ -1,0 +1,16 @@
+{
+  "policy_version": "cmp/0.4.0",
+  "frozen_note": "D 集（#27 裁决方向 B，先于实现冻结）：单变量对称性——模型-only 变化遵循 SPEC §4 行 2。A/B 集与既有预期零改动；D2 证明尺度条件独立把关未被放松。",
+  "cases": [
+    {"id": "D1", "category": "model-only-variation",
+     "records": [
+       {"task_id": "t-model-only", "harness": "h1", "model": "model-a", "reward": 0.8, "reward_status": "verified"},
+       {"task_id": "t-model-only", "harness": "h1", "model": "model-b", "reward": 0.6, "reward_status": "verified"}],
+     "claims": {"score_comparison": "ADMISSIBLE", "causal": "INADMISSIBLE"}},
+    {"id": "D2", "category": "model-plus-scale-violation",
+     "records": [
+       {"task_id": "t-model-scale", "harness": "h1", "model": "model-a", "reward": 0.8, "reward_status": "verified"},
+       {"task_id": "t-model-scale", "harness": "h1", "model": "model-b", "reward": 62.0, "reward_status": "verified"}],
+     "claims": {"score_comparison": "INADMISSIBLE", "descriptive_registration": "ADMISSIBLE"}}
+  ]
+}

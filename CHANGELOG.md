@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+
+- None yet.
+
+## v0.5.4 (2026-10-27)
+- Ships specification **cmp/0.4.0** (PR #33, #27 direction B — single-variable
+  symmetry: model-only score_comparison is now ADMISSIBLE side-by-side, guarded
+  independently by score-scale and zero-semantics conditions). First PyPI release
+  carrying 0.4 semantics; CDRs carry policy_version cmp/0.4.0 (schema accepts both
+  0.3.x and 0.4.x — old records stay valid). Frozen D-set (D1/D2) anchors the new
+  branches; all 22 legacy pairs verified unchanged. #27 remains open for explicit
+  owner confirmation; the change is fully revertible
 - (#27, direction B) Specification cmp/0.3.1 -> **cmp/0.4.0** (minor per SPEC §5:
   adjudication-table branch change): score_comparison no longer treats a
   same_model violation as an independent INADMISSIBLE trigger — single-variable
