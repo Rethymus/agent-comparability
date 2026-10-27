@@ -266,6 +266,9 @@ pip install -e .[pydantic] && python adapters/pydantic_adapter.py
 两者封装*同一个*核心（语义零重复）。Inspect scorer 使用 `metrics=[]`——可采纳性**不**被聚合为准确率。
 Pydantic 评估器检查**被评测 task 的真实输出**（`ctx.output`）与冻结预期一致——评估器内部
 绝不重算判定——适配器退出码取自全 22 对的 `report`（cases + failures）。
+转换**真实 Inspect EvalLog 文件**（非冻结案例）请用转换器：
+`python -m agent_comparability.inspect_log run.eval --claim … --status …`
+（官方 API、显式映射政策、禁止静默猜测——见 [docs/inspect-log.md](docs/inspect-log.md)）。
 
 ## 12. 规范与版本
 
