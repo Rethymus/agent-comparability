@@ -74,7 +74,7 @@
     },
     "policy_version": {
       "type": "string",
-      "pattern": "^cmp/0\\.3(\\.1)?$"
+      "pattern": "^cmp/0\\.[34](\\.\\d+)?$"
     },
     "limitations": {
       "type": "array",

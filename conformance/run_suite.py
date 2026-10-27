@@ -136,7 +136,8 @@ def main() -> int:
         "metric2_spec_conformance": {"passed": f"{indep_pass}/{len(pairs)}", "rows": indep_rows},
         "metric1_integration_consistency": integration,
         "cdr_schema_probe": schema_probe,
-        "case_sets": {"A(参与过调试,既有)": 9, "B(新边界,未参与调试)": len(pairs) - 9},
+        "case_sets": {"A(参与过调试,既有)": 9, "B(新边界,未参与调试)": 13,
+                       "D(0.4对称性,#27)": len(pairs) - 22},
     }
     OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     brief = {k: (v["passed"] if isinstance(v, dict) and "passed" in v else v) for k, v in result.items()

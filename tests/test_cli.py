@@ -39,7 +39,7 @@ def test_valid_input_exit0_admissible(tmp_path):
     assert r.returncode == 0, r.stderr
     cdr = json.loads(r.stdout)
     assert cdr["admissibility"] == "ADMISSIBLE"
-    assert cdr["policy_version"] == "cmp/0.3.1"
+    assert cdr["policy_version"] == "cmp/0.4.0"
     assert any("抗恶意篡改" in l for l in cdr["limitations"])
     for k in ("case_id", "requested_claim", "satisfied_conditions", "violated_conditions",
               "unknown_conditions", "supported_claims", "unsupported_claims",

@@ -220,7 +220,7 @@ cdr.violated_conditions -> ['same_task_id', 'same_model', 'single_variable_isola
     "rec:t1/m1/h1",
     "rec:t1/m1/h2"
   ],
-  "policy_version": "cmp/0.3.1",
+  "policy_version": "cmp/0.4.0",
   "limitations": [
     "摘要一致仅证明未同步修改，不构成抗恶意篡改（单写信任域）"
   ]
@@ -281,7 +281,7 @@ Pydantic 评估器检查**被评测 task 的真实输出**（`ctx.output`）与�
 
 ## 12. 规范与版本
 
-三条独立版本线：软件 tag（如 `v0.5.0`）、规范 `cmp/0.3.1`（在 SPEC 内）、`agent_comparability.__version__`。判定表变更须规范升 major（SPEC §5）。完整 tag 谱系见 [CHANGELOG](CHANGELOG.md)（v0.3.1–v0.3.6 为保留不动的废弃候选）。
+三条独立版本线：软件 tag（如 `v0.5.0`）、规范 `cmp/0.4.0`（在 SPEC 内）、`agent_comparability.__version__`。判定表变更须规范升 major（SPEC §5）。完整 tag 谱系见 [CHANGELOG](CHANGELOG.md)（v0.3.1–v0.3.6 为保留不动的废弃候选）。
 
 ## 13. 局限
 
@@ -308,14 +308,14 @@ Pydantic Evals 适配器；任何能映射到[记录结构](spec/SPEC.md#0-范�
 不会——无网络、无凭据、无需 Docker。它只读取你传入的记录。
 
 **该依赖哪个版本？**
-包 `v0.5.0+`（此后版本线统一并由 CI 强制）；规范 `cmp/0.3.1` 独立演进——见
+包 `v0.5.0+`（此后版本线统一并由 CI 强制）；规范 `cmp/0.4.0` 独立演进——见
 [第 12 节](#12-规范与版本)。
 
 ## 项目状态
 
 | 组件 | 状态 |
 |---|---|
-| 规范 `cmp/0.3.1` | 稳定——由冻结一致性集锚定 |
+| 规范 `cmp/0.4.0` | 稳定——由冻结一致性集锚定 |
 | 结论类型 | `score_comparison`、`causal`、`descriptive_registration`（未知类型 → `INCONCLUSIVE`） |
 | 一致性案例 | 22 对冻结（A + B 集），三个分离指标，CI 全绿 |
 | 适配器 | Inspect AI ✓ · Pydantic Evals ✓ |

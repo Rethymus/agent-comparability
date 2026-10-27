@@ -52,9 +52,9 @@ python -m agent_comparability.inspect_log run-a.eval run-b.eval \
 - 每记录的 manifest `artifact_ref` 指向其来源日志并分日志实算摘要；
 - **语义提示**：`score_comparison` 要求全部记录同任务。两个多样本日志整体合并（跨题池化）会因
   `same_task_id` 被拒（INADMISSIBLE，附 `multi_task_merge` 警告）——逐题比较请用单样本日志；
-- **已知规范歧义（#27）**："仅模型不同（同任务同 harness）"的 `score_comparison` 在
-  SPEC §3.3-2（判定表，规范核心）下判 INADMISSIBLE，而 §4 变量表第 2 行写 ADMISSIBLE。
-  实现与独立实现当前均按 §3.3 执行；歧义裁决前本行为锁定并如实标注。
+- **cmp/0.4.0（#27 已裁决，方向 B）**："仅模型不同（同任务同 harness）"的 `score_comparison`
+  判 **ADMISSIBLE**（单变量对称性，与 §4 行 2 一致）；尺度/零语义条件继续独立把关
+  （D 冻结对 D1/D2 锚定）。0.3.1 行为见 SPEC 版本记录。
 
 ## Multi-log comparison (English summary)
 
@@ -64,7 +64,7 @@ must match; default all `inspect-ai` — harness labels are never fabricated). S
 agree across logs (mixed scorers → exit 2). Each record's manifest artifact_ref points to
 its own log with per-log digests. Semantics note: `score_comparison` requires all records
 to share one task — pooling two multi-sample logs is correctly refused (INADMISSIBLE with a
-`multi_task_merge` warning); compare per-question with single-sample logs. Known spec
-ambiguity (#27): model-only variation under `score_comparison` follows SPEC §3.3-2
-(INADMISSIBLE) although the §4 summary table says ADMISSIBLE; both implementations follow
-§3.3 and the behavior is locked until the ambiguity is adjudicated.
+`multi_task_merge` warning); compare per-question with single-sample logs. With cmp/0.4.0
+(#27 adjudicated, direction B): model-only variation under `score_comparison` yields
+**ADMISSIBLE** (single-variable symmetry per §4 row 2); scale and zero-semantics
+conditions still guard independently (frozen pairs D1/D2 anchor this).
