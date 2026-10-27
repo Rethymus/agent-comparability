@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Maintenance: `[project.urls]` added to pyproject (Homepage/Repository/Issues/Changelog —
+  PyPI project page now links back to GitHub once included in a future release);
+  PyPI version badge added to both READMEs (package is published since 0.5.2)
 - (#22) Real-pipeline comparative experiment 001 (`experiments/scenarios_001/`):
   four scenarios through the actual pipeline (real .eval produced in-test via
   mockllm -> #20 converter -> #16 CLI -> core), covering all four verdicts —
