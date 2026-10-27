@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- (#18) Evidence Manifest (`evidence/0.1`, CDR-external): artifact-level trust
+  states source_claimed < artifact_observed < independently_verified with strict
+  no-auto-upgrade rules — artifact_observed only after the artifact file is
+  actually read and its sha256 computed; independently_verified only with an
+  explicit method/operator/at entry on top of an observed artifact;
+  verification-without-artifact is flagged inconsistent, never an upgrade.
+  Deliberately orthogonal to SPEC §1 record-level tiers: never enters
+  adjudicate(), zero SPEC/schema changes. CLI gains --manifest (honest offline
+  default: input file as artifact, all records artifact_observed, no
+  independent-verification claims); verify_manifest() recomputes digests for
+  audit; bilingual contract doc docs/evidence-manifest.md; 9-path test suite
+  negative-first (rules module absent → collection failure), incl. tamper
+  detection via digest recompute
 - (#16) Offline JSON → CDR CLI closure (`python -m agent_comparability input.json
   --claim <type> [-o out.json]`): zero extra runtime dependencies (stdlib argparse
   + json), reuses adjudicate() with no judgment-semantics changes; exit-code

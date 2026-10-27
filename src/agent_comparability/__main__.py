@@ -79,6 +79,8 @@ def main(argv=None) -> int:
                    help="请求结论类型：score_comparison / causal / descriptive_registration"
                         "（未支持类型 → INCONCLUSIVE，不猜测）")
     p.add_argument("-o", "--output", help="CDR 输出文件路径（缺省打印到 stdout）")
+    p.add_argument("--manifest", help="同时输出 Evidence Manifest（#18）：输入文件作为证据制品"
+                                      "实算 sha256，全部记录 artifact_observed，不含任何独立验证声明")
     args = p.parse_args(argv)
 
     try:
@@ -108,6 +110,20 @@ def main(argv=None) -> int:
             return 2
     else:
         print(out)
+    if args.manifest:
+        from .evidence import build_manifest
+        # 离线 JSON 的诚实默认：输入文件即证据制品（读后实算摘要）；无来源端验证能力，
+        # 无独立验证声明——绝不把 source_claimed 冒充为已验证。
+        m = build_manifest(case, source_kind="offline_json",
+                           artifacts={i: args.input for i in range(len(case["records"]))},
+                           requested_claim=args.claim,
+                           unsupported_capabilities=["source_side_verification_unavailable"])
+        try:
+            with open(args.manifest, "w", encoding="utf-8") as f:
+                f.write(json.dumps(m, ensure_ascii=False, indent=2) + "\n")
+        except OSError as e:
+            print(f"error: 无法写入 manifest 文件 {args.manifest}: {e.strerror or e}", file=sys.stderr)
+            return 2
     return 0
 
 

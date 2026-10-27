@@ -141,7 +141,9 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison
 
 输入契约（`{"id": str, "records": [{"task_id", "harness", "model", "reward":
 数值, "reward_status", ...可选字段}]}`）；Record 未知字段按 SPEC §5 忽略并记入
-`unknown_conditions`。
+`unknown_conditions`。加 `--manifest out.manifest.json` 可同时输出 Evidence
+Manifest，记录制品摘要与证据可信状态（绝不自动升级；见
+[docs/evidence-manifest.md](docs/evidence-manifest.md)）。
 
 **Python API**：
 
