@@ -19,10 +19,10 @@
 
 | 项 | 状态 | 门控 |
 |---|---|---|
-| 0.5.3 版本化（CHANGELOG Unreleased 已积累 CLI/manifest/converter/experiment/urls 五组） | 就绪待发 | **PENDING_OWNER**（发行节奏属所有者决策；tag+PyPI 均一键就绪） |
+| 0.5.3 版本化 | **DONE（2026-10-27）** | 已发行（CLI/manifest/converter/experiment/urls/多日志/歧义报告/定位文档全部随行） |
+| 规范歧义 #27（§3.3-2 vs §4 行 2） | **开放待所有者裁决** | 方向 A（维持 §3.3 修 §4 表述）/ 方向 B（升 minor 0.3→0.4 + 迁移案例）；裁决前行为已锁定 |
 | 第二真实来源（pydantic-evals 真实报告转换） | 暂停 | 触发条件：真实数据或用户需求 |
 | 真实第三方 harness 数据试点 | 暂停 | 触发条件：合法许可数据 |
-| 定位文档/预印本 | 进行中（文献核查） | 发布动作属所有者 |
 | 外部展示（HN/Reddit/X 等） | 未启动 | **属所有者动作**（草稿可代拟） |
 
-**结论分级**：无 BLOCKED 项；两项 PENDING_OWNER/触发条件型待决；其余全部 FIXED/RESOLVED/TRACKED。
+**结论分级**：无 BLOCKED 项；一项待所有者裁决（#27）；其余暂停项均有明确触发条件。
