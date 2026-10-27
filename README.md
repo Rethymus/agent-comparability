@@ -281,6 +281,10 @@ Both wrap the *same* core (no semantic duplication). Inspect scorer uses
 The Pydantic evaluator checks the **task's real output** (`ctx.output`) against
 frozen expectations — it never re-adjudicates inside the evaluator — and the
 adapter's exit code derives from the full 22-pair `report` (cases + failures).
+For **real Inspect EvalLog files** (not frozen cases) use the converter:
+`python -m agent_comparability.inspect_log run.eval --claim … --status …`
+(official APIs, explicit mapping policy, no silent guessing — see
+[docs/inspect-log.md](docs/inspect-log.md)).
 
 ## 12. Specification & Versioning
 

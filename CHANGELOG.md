@@ -1,6 +1,23 @@
 # Changelog
 
 ## Unreleased
+- (#20) Inspect AI EvalLog converter (`python -m agent_comparability.inspect_log`):
+  converts actually-produced .eval logs into cmp records -> CDR + Evidence
+  Manifest via official APIs only (read_eval_log / sample summaries; --full-read
+  for trajectories). Explicit mapping policy — no silent guessing:
+  reward_status requires an operator --status assertion (logs carry no
+  verification tier); non-numeric scores (exact's C/I) require an explicit
+  --score-map; task identity prefers explicit --task-label over dataset.name
+  over the run-scoped hash; trajectory_available unset under summary read
+  (never claim unobserved facts), set from observation under --full-read;
+  score_scale never set; error samples skipped and counted, never fabricated.
+  Per-sample record granularity (aggregation rejected as a semantic guess);
+  comparing different samples in one log correctly yields INADMISSIBLE.
+  Manifest integration (§3): per-record sha256 of the .eval artifact, all
+  mapping decisions as warnings, verification_tier_absent_in_source declared.
+  Acceptance uses a REAL log produced in-test by running inspect eval with
+  mockllm/model (zero API calls); 10-path suite negative-first
+  (module absent -> all failed), incl. missing-dependency clean exit-2 path
 - (#18) Evidence Manifest (`evidence/0.1`, CDR-external): artifact-level trust
   states source_claimed < artifact_observed < independently_verified with strict
   no-auto-upgrade rules — artifact_observed only after the artifact file is
