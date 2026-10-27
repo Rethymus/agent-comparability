@@ -80,6 +80,8 @@ Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/
 | **证据缺口** | 轨迹缺失悄然抬高成功率；排名随 Harness 反转 |
 
 这些边界应当**机器可校验**，而非凭感觉——这正是本项目交付的东西。
+与基准严谨性/轨迹审计类工作的关系（经核实的文献锚点）见
+[docs/positioning.md](docs/positioning.md)。
 
 ## 3. 它做什么
 
