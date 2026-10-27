@@ -57,6 +57,12 @@ Agent Comparability is a framework-independent **specification** ([spec/SPEC.md]
 a frozen **conformance suite**, and a thin **reference implementation** that adjudicates
 *comparability* of agent evaluation records — never the scores themselves.
 
+**Does it actually refuse unsupported claims?** See
+[experiments/scenarios_001/RECORD.md](experiments/scenarios_001/RECORD.md): four real-pipeline
+scenarios (real `.eval` logs → converter → core) covering all four verdicts — including the
+confounded comparison and the missing-trajectory case, both correctly **refused** rather than
+packaged as supported conclusions.
+
 **Who is this for**: developers comparing agent/prompt/harness evaluation results,
 benchmark authors documenting what conclusions their data supports, and teams building
 reliability pipelines on top of existing eval frameworks.
@@ -136,7 +142,9 @@ pip install -e .[suite]                 # + suite basics (pyyaml, jsonschema)
 pip install -e .[suite,inspect,pydantic]  # FULL conformance run — required by run_suite.py
 ```
 
-Requires Python ≥ 3.10. No Docker, no model keys.
+Requires Python ≥ 3.10. No Docker, no model keys. Note: the core package supports 3.10+;
+the optional `inspect`/`pydantic` extras pull dependencies that require Python ≥ 3.11 —
+on 3.10 pip resolves older versions of them.
 
 ## 7. Quickstart
 

@@ -54,6 +54,11 @@
 
 Agent Comparability 是一套与框架无关的**规范**（[spec/SPEC.md](spec/SPEC.md)）、冻结的**一致性测试套件**和极薄的**参考实现**，它裁决的是 Agent 评测记录的*可比性*——从不为分数本身评分。
 
+**它真的会拒绝无依据的主张吗？** 见
+[experiments/scenarios_001/RECORD.md](experiments/scenarios_001/RECORD.md)：四个真实管线场景
+（真实 `.eval` 日志 → 转换器 → 核心）覆盖全部四种裁决——其中混淆比较与轨迹缺失两例均被
+**正确拒绝**，而非包装成受支持的结论。
+
 **适用人群**：需要比较 Agent/Prompt/Harness 评测结果的开发者、希望说明"自己的基准数据支持什么结论"的基准作者、以及在现有评测框架之上构建可靠性管线的团队。
 
 ### 与现有工具的关系
@@ -126,7 +131,8 @@ pip install -e .[suite]                 # + 套件基础（pyyaml、jsonschema�
 pip install -e .[suite,inspect,pydantic]  # 完整 Conformance 运行——run_suite.py 必需
 ```
 
-要求 Python ≥ 3.10。无需 Docker、无需模型密钥。
+要求 Python ≥ 3.10。无需 Docker、无需模型密钥。注意：核心包支持 3.10+；可选的
+`inspect`/`pydantic` 扩展引入的依赖要求 Python ≥ 3.11——在 3.10 上 pip 会解析为其旧版本。
 
 ## 7. 快速开始
 

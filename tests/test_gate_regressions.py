@@ -1,5 +1,5 @@
-"""永久回归：负向门禁 N1-N7 的可执行断言（原始失败记录见 VALIDATION.md 与 git 历史
-ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。"""
+"""永久回归：负向门禁 N1-N7 的可执行断言（原始失败记录见 docs/internal/VALIDATION.md
+与 git历史 ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。"""
 import importlib
 import json
 import shutil
