@@ -1,6 +1,22 @@
 # Changelog
 
 ## Unreleased
+- (#26) Multi-log comparison entry: `inspect_log A.eval B.eval …` merges logs under a
+  shared explicit --task-label into one case/CDR/manifest; per-log harness labels via
+  comma-separated --harness-name (count-validated; never fabricated); cross-log scorer
+  must agree (mixed scorers → exit 2); per-record artifact_ref + digest per source log;
+  pooling multi-sample logs is correctly refused (same_task_id violated) with an explicit
+  multi_task_merge warning; single-log CLI contract unchanged. Real-log acceptance:
+  two-run single-sample ADMISSIBLE, whole-log pooling refused, sample-id mismatch
+  refused, count-mismatch/unreadable-log exit 2
+- (#27) Spec ambiguity REPORTED (no spec/frozen changes): §3.3-2 (same_model violation →
+  INADMISSIBLE, labeled the normative decision table) conflicts with §4 row 2
+  (model-only variation → ADMISSIBLE); surfaced by real two-model logs; both
+  implementations follow §3.3, behavior locked in tests pending adjudication
+- (#28) Real multi-epoch (epochs=2) acceptance: repetition_count=2 derived from real
+  log data; --full-read now correctly matches sample ids (str-key fix) and sets
+  trajectory_available from actual observation (messages/events); summary-read still
+  declares nothing
 - Maintenance: `[project.urls]` added to pyproject (Homepage/Repository/Issues/Changelog —
   PyPI project page now links back to GitHub once included in a future release);
   PyPI version badge added to both READMEs (package is published since 0.5.2)
