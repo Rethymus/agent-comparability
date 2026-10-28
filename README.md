@@ -165,6 +165,8 @@ number, "reward_status", ...optional}]}`); unknown record fields are ignored and
 recorded in `unknown_conditions` (SPEC §5). Add `--manifest out.manifest.json` to
 also emit an Evidence Manifest documenting artifact digests and evidence trust
 states (never auto-upgraded; see [docs/evidence-manifest.md](docs/evidence-manifest.md)).
+For four end-to-end walkthroughs (offline JSON, evidence manifest, single Inspect log,
+cross-log comparison), see [docs/usage-examples.md](docs/usage-examples.md).
 
 **Python API**:
 
