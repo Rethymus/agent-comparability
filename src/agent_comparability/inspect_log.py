@@ -193,7 +193,8 @@ def main(argv=None) -> int:
                                           task_label=task_label, harness=harnesses[args.log.index(log_path)],
                                           score_map=score_map)
         except MappingError as e:
-            print(f"error: {e}", file=sys.stderr)
+            # PR #36 评审缺口：多日志模式下诊断必须可定位来源——路径前置，原消息不变
+            print(f"error: 日志 {log_path}: {e}", file=sys.stderr)
             return 2
         _fill_model(recs, hdr.eval.model)
         for rec in recs:

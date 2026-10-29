@@ -406,9 +406,9 @@ def test_multilog_second_log_unmapped_letter_exit2(tmp_path):
     """第二份日志出现未映射字母分数 → exit 2，诊断可定位到该日志的失败样本。
 
     防回归：多日志循环吞掉或笼统化逐样本映射错误——MappingError 必须带样本级定位，
-    操作者才能定位是哪份日志的哪个样本。诊断如实边界：消息含失败样本 id（此处为
-    第二份日志独有的显式 id）与未映射取值，不含日志路径本身；本测试断言的是定位
-    信息下限，未来若实现路径级诊断仍通过。
+    操作者才能定位是哪份日志的哪个样本。诊断三要素（PR #36 评审缺口修复后）：
+    来源日志路径（路径级定位）+ 失败样本 id（此处为第二份日志独有的显式 id）+
+    未映射取值与补救开关。
     """
     from inspect_ai.model._providers.mockllm import MockLLM
     a = _var_log_targets("mockllm/model", [("q1?", "deliberately-wrong")], "umap-a")
@@ -422,5 +422,6 @@ def test_multilog_second_log_unmapped_letter_exit2(tmp_path):
     r = run_conv(a, b, "--claim", "score_comparison", "--status", "verified",
                  "--score-map", "I=0.0", "--task-label", "umap")
     assert r.returncode == 2                          # 未映射字母 → 程序级失败（exit 2）
+    assert b in r.stderr                              # 定位到来源日志路径（多日志哪份出错）
     assert "second-log-only" in r.stderr              # 定位到第二份日志中的失败样本
     assert "'C'" in r.stderr and "score-map" in r.stderr  # 指明未映射取值与补救开关
