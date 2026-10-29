@@ -2,7 +2,23 @@
 
 ## Unreleased
 
-- None yet.
+- (#35) README badge style discipline: the three shields.io badges now carry
+  `style=flat-square` (readme-anatomy dogfood round 1; mechanical fix, zero prose
+  changes, both language files kept in lockstep)
+- (#36) Test hardening, no src/ or frozen-case changes: new
+  `tests/test_properties_04.py` randomized generalizations of the frozen cmp/0.4.0
+  D-set (model-only symmetry stays ADMISSIBLE with same_model as honest info item;
+  model+harness confound INADMISSIBLE; causal rejected; missing-trace INCONCLUSIVE
+  dominates; scale gate not relaxed); `tests/test_inspect_log.py` multilog
+  boundaries (epochs=2 log + single-sample log merge with per-log
+  repetition_count and faithful per-record artifact refs; unmapped letter score in
+  the second log exits 2 with a sample-level locator)
+- (#37) `docs/usage-examples.md`: four real user journeys with copy-paste commands
+  and verdict shapes — offline JSON → CDR with the exit-code contract; --manifest
+  three-state semantics + verify_manifest() audit reuse; single Inspect log with
+  the explicit mapping policy; cross-log comparison with shared --task-label
+  (pooling refused, model-only ADMISSIBLE under cmp/0.4.0). README.md /
+  README.zh-CN.md §7 link to it in both languages
 
 ## v0.5.4 (2026-10-27)
 - Ships specification **cmp/0.4.0** (PR #33, #27 direction B — single-variable
