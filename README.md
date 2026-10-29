@@ -298,7 +298,7 @@ Both wrap the *same* core (no semantic duplication). Inspect scorer uses
 `metrics=[]` — admissibility is deliberately **not** aggregated into accuracy.
 The Pydantic evaluator checks the **task's real output** (`ctx.output`) against
 frozen expectations — it never re-adjudicates inside the evaluator — and the
-adapter's exit code derives from the full 22-pair `report` (cases + failures).
+adapter's exit code derives from the full 26-pair `report` (cases + failures).
 For **real Inspect EvalLog files** (not frozen cases) use the converter:
 `python -m agent_comparability.inspect_log run.eval --claim … --status …`
 (official APIs, explicit mapping policy, no silent guessing — see
@@ -348,7 +348,7 @@ Package `v0.5.0+` (version lines unified and CI-enforced since then); specificat
 |---|---|
 | Specification `cmp/0.4.0` | Stable — frozen conformance set anchors it |
 | Claim types | `score_comparison`, `causal`, `descriptive_registration` (+ unknown → `INCONCLUSIVE`) |
-| Conformance cases | 22 frozen pairs (A + B sets), three separated metrics, all green in CI |
+| Conformance cases | 26 frozen pairs (A + B + D sets), three separated metrics, all green in CI |
 | Adapters | Inspect AI ✓ · Pydantic Evals ✓ |
 | CI gates | Terminal scan · bilingual docs · conformance ×3 · tests · release version · build + twine · package content |
 | Repo governance | `main` protected (PR + required check), release tags `v*` immutable |
