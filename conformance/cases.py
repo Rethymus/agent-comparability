@@ -1,4 +1,4 @@
-"""共享案例加载器：A 集（冻结）+ B 集（边界）→ 统一 22 对 (case_id, claim, expected, records)。
+"""共享案例加载器：A 集（冻结）+ B 集（边界）→ 统一 26 对（A9+B13+D4，动态计算） (case_id, claim, expected, records)。
 
 供 conformance/run_suite.py 与 adapters/*.py 共用，保证两个适配器报告覆盖完全相同的案例集。
 """
