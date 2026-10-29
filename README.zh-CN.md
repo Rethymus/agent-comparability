@@ -280,7 +280,7 @@ pip install -e .[pydantic] && python adapters/pydantic_adapter.py
 
 两者封装*同一个*核心（语义零重复）。Inspect scorer 使用 `metrics=[]`——可采纳性**不**被聚合为准确率。
 Pydantic 评估器检查**被评测 task 的真实输出**（`ctx.output`）与冻结预期一致——评估器内部
-绝不重算判定——适配器退出码取自全 22 对的 `report`（cases + failures）。
+绝不重算判定——适配器退出码取自全 26 对的 `report`（cases + failures）。
 转换**真实 Inspect EvalLog 文件**（非冻结案例）请用转换器：
 `python -m agent_comparability.inspect_log run.eval --claim … --status …`
 （官方 API、显式映射政策、禁止静默猜测——见 [docs/inspect-log.md](docs/inspect-log.md)）。
@@ -323,7 +323,7 @@ Pydantic Evals 适配器；任何能映射到[记录结构](spec/SPEC.md#0-范�
 |---|---|
 | 规范 `cmp/0.4.0` | 稳定——由冻结一致性集锚定 |
 | 结论类型 | `score_comparison`、`causal`、`descriptive_registration`（未知类型 → `INCONCLUSIVE`） |
-| 一致性案例 | 22 对冻结（A + B 集），三个分离指标，CI 全绿 |
+| 一致性案例 | 26 对冻结（A + B + D 集），三个分离指标，CI 全绿 |
 | 适配器 | Inspect AI ✓ · Pydantic Evals ✓ |
 | CI 门禁 | 终扫 · 双语文档 · 一致性×3 · 测试 · 发行版本 · build+twine · 包内容 |
 | 仓库治理 | `main` 受保护（PR + 必需检查），发行 tag `v*` 不可变 |

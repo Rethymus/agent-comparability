@@ -24,7 +24,7 @@
   honest blocked report; tampering with checks to fake a pass is forbidden).
   CONTRIBUTING.md gains a one-line pointer; README §14 (EN+zh) links AGENTS.md
 
-## v0.5.6 (2026-10-27)
+## v0.5.6 (2026-10-29)
 - (#43) Four-verdict example files + Journey 1 copy-paste commands: new
   `examples/demo-inadmissible.json` (model+harness
   confounded → INADMISSIBLE), `examples/demo-partial.json` (a verified 0 meets an
@@ -66,7 +66,7 @@
   26-pair (A9+B13+D4) reality (counts were already computed dynamically and correct —
   comment-only). Zero runtime-behavior change
 
-## v0.5.5 (2026-10-27)
+## v0.5.5 (2026-10-29)
 - (#38) Multilog MappingError diagnostic fix — standalone entry (split out of the
   (#36) test-hardening bullet after the audit flagged imprecise attribution: a src/
   fix was folded into a tests-only entry): when `records_from_summaries` raises
