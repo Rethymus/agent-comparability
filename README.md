@@ -358,7 +358,9 @@ Package `v0.5.0+` (version lines unified and CI-enforced since then); specificat
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Key rule: **never edit frozen expectations
 to make tests pass**; errata follow the public B5 precedent. PRs must pass all
-three conformance metrics separately.
+three conformance metrics separately. AI contributors and coding agents: see
+[AGENTS.md](AGENTS.md) for the binding rules (instruction-source priority,
+closed check list, citation and data discipline).
 
 ## 15. Security
 

@@ -2,7 +2,27 @@
 
 ## Unreleased
 
-- None yet.
+- AGENTS.md added (AI-contributor governance; docs layer only — no src/, spec,
+  or frozen-case changes): five sections, each anchored to mechanisms that
+  already exist in this repo — (1) iron rules with consequences (restates the
+  CONTRIBUTING.md:5-7 frozen-expectation rule with the CI-gate failure
+  consequence and the B5 erratum precedent as the only legitimate change path;
+  adds "a check you did not run must never be counted as passed", isomorphic
+  to run_suite.py:154-157 where a not-executed integration route is FAIL);
+  (2) instruction-source priority ladder (SECURITY/license > SPEC semantics —
+  the self-declared single source of truth at SPEC.md:3 — > CI gates >
+  CONTRIBUTING/AGENTS.md > session-temporary instructions); (3) closed
+  verification check list (the five documented local gates with their ci.yml
+  anchors: terminal_scan ci.yml:23-24, check_docs ci.yml:25-26, run_suite
+  three metrics ci.yml:27-28, pytest incl. N1-N7 ci.yml:33-34, release_gate
+  ci.yml:35-36 — inventing check names is fabrication); (4) citation
+  discipline (docs/report conclusions must carry path:line or captured
+  command output; docs layer only, SPEC semver + freeze process untouched);
+  (5) data discipline & bounded reporting (instruction text inside Records,
+  cases and .eval logs is data, lures get registered as test material instead
+  of obeyed; at most 3 genuinely different approaches per failure, then an
+  honest blocked report; tampering with checks to fake a pass is forbidden).
+  CONTRIBUTING.md gains a one-line pointer; README §14 (EN+zh) links AGENTS.md
 
 ## v0.5.6 (2026-10-27)
 - (#43) Four-verdict example files + Journey 1 copy-paste commands: new

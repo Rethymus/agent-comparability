@@ -331,7 +331,7 @@ Pydantic Evals 适配器；任何能映射到[记录结构](spec/SPEC.md#0-范�
 
 ## 14. 参与贡献
 
-见 [CONTRIBUTING.md](CONTRIBUTING.md)。关键规则：**绝不为了让测试通过而修改冻结预期**；勘误遵循 B5 公开先例。PR 必须分别通过三个一致性指标。
+见 [CONTRIBUTING.md](CONTRIBUTING.md)。关键规则：**绝不为了让测试通过而修改冻结预期**；勘误遵循 B5 公开先例。PR 必须分别通过三个一致性指标。AI 贡献者与编程智能体：参见 [AGENTS.md](AGENTS.md)（指令来源优先级、封闭检查清单、引用与数据纪律）。
 
 ## 15. 安全
 
