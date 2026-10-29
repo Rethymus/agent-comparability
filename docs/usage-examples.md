@@ -29,8 +29,12 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison -
 
 #### 四种裁决 × 可直接复制的命令
 
-四个示例文件都内嵌 `_comment`（SYNTHETIC/ILLUSTRATIVE + 预期裁决）。以下每条「为什么」均摘自
-实际运行输出的 CDR 字段（真实实跑后摘录，非虚构）：
+前提：先完成基础安装 `pip install -e .`（见 README §6——src 布局，未安装时
+`python -m agent_comparability` 直接 ModuleNotFoundError），并在**仓库根目录**运行以下命令
+（`examples/...` 为相对路径，在其他目录运行会得到 exit 2 的「无法读取输入文件」）。
+
+四个示例文件都内嵌 `_comment`（SYNTHETIC/ILLUSTRATIVE + 预期裁决及一句「为何」）。以下每条
+「为什么」均摘自实际运行输出的 CDR 字段（真实实跑后摘录，非虚构）：
 
 **ADMISSIBLE（同尺度并排）**——`examples/demo-case.json`：
 
@@ -219,9 +223,14 @@ model, differing only in harness, both `verified`, rewards within [0,1] with no 
 
 #### The four verdicts × copy-paste commands
 
-All four example files embed a `_comment` (SYNTHETIC/ILLUSTRATIVE + expected verdict). Each
-"why" below is excerpted from the CDR fields of an actual run (transcribed from real output,
-not invented):
+Prerequisites: install the package first — `pip install -e .` (see README §6; src layout, so
+without installation `python -m agent_comparability` fails with ModuleNotFoundError) — and run
+from the **repository root** (`examples/...` are relative paths; running elsewhere yields the
+exit-2 "cannot read input file" error).
+
+All four example files embed a `_comment` (SYNTHETIC/ILLUSTRATIVE + the expected verdict with a
+one-line "why"). Each "why" below is excerpted from the CDR fields of an actual run (transcribed
+from real output, not invented):
 
 **ADMISSIBLE (side-by-side on the same scale)** — `examples/demo-case.json`:
 
