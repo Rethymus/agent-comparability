@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Examples now cover all four verdicts: new `examples/demo-inadmissible.json` (model+harness
+  confounded → INADMISSIBLE), `examples/demo-partial.json` (a verified 0 meets an
+  unresolved_zero 0 → PARTIAL, stratified-only) and `examples/demo-inconclusive.json`
+  (trajectory_available=false → INCONCLUSIVE, source reward retained verbatim). Each file
+  embeds a `_comment` marking SYNTHETIC/ILLUSTRATIVE + the expected verdict, in the style of
+  `examples/demo-case.json`. docs/usage-examples.md Journey 1 (旅程 1, CN+EN) now maps all four
+  verdicts to copy-paste commands and explains each "why" with excerpts from actual run output
+  (violated/supported/unsupported_claims), replacing the previous hypothetical mutation
+  bullets. Docs/examples layer only — no src/ changes
 - CDR consumer-loop closure: new `python -m agent_comparability.validate cdr.json`
   (consumer-side validator — check a CDR received from someone else before trusting it;
   pure stdlib, zero extra dependencies, independently runnable). Three-state exit

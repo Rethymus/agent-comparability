@@ -1,0 +1,10 @@
+{
+  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. A verified 0 score meets an unresolved_zero 0 score (zero-score semantics differ): score_comparison is expected to yield PARTIAL (per-status stratified rates only; pooling is forbidden). See docs/usage-examples.md 旅程 1 / Journey 1.",
+  "id": "demo-partial-001",
+  "records": [
+    {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",
+     "reward": 0.0, "reward_status": "verified"},
+    {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",
+     "reward": 0.0, "reward_status": "unresolved_zero"}
+  ]
+}
