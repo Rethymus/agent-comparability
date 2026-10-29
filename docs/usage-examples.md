@@ -1,13 +1,14 @@
-# 使用示例：四个真实用户旅程 / Usage Examples: Four Real User Journeys
+# 使用示例：五个真实用户旅程 / Usage Examples: Five Real User Journeys
 
-> **English section below.** 覆盖两个 CLI 入口：`python -m agent_comparability`（离线 JSON，#16）与
-> `python -m agent_comparability.inspect_log`（Inspect EvalLog 转换器，#20/#26）。本文只描述**可直接
+> **English section below.** 覆盖三个 CLI 入口：`python -m agent_comparability`（离线 JSON，#16）、
+> `python -m agent_comparability.inspect_log`（Inspect EvalLog 转换器，#20/#26）与
+> `python -m agent_comparability.validate`（CDR 消费侧校验器）。本文只描述**可直接
 > 复制的命令**与**预期裁决形态**（判定名、条件名、清单状态名），不展示具体 JSON 全文——以实际运行
 > 输出为准。判定语义的单一来源是 [spec/SPEC.md](../spec/SPEC.md) §3.3。
 
 ## 中文
 
-**对全部旅程通用的退出码契约**（两个 CLI 入口一致）：
+**产出侧两个 CLI 入口通用的退出码契约**（旅程 1–4；旅程 5 的消费侧校验器另有 0/1/2 三态契约，见该节）：
 
 - **裁决 ≠ 程序失败**：`exit 0` 表示成功产出 CDR——`ADMISSIBLE / INADMISSIBLE / PARTIAL /
   INCONCLUSIVE` 四种裁决都是正常结果，脚本不应把非 ADMISSIBLE 当作崩溃处理；
@@ -125,9 +126,37 @@ python -m agent_comparability.inspect_log run-a.eval run-b.eval \
     --claim score_comparison --status verified --score-map C=1.0,I=0.0 --task-label same-task
 ```
 
+### 旅程 5：校验收到的 CDR
+
+产出侧两个入口都会输出 CDR；**消费侧**在采信他人产出的 CDR 之前，先用校验器检查——
+纯 stdlib，无任何额外依赖：
+
+```bash
+python -m agent_comparability.validate cdr.json
+# OK: 结构有效，policy_version 可识别（cmp/0.4.0）  → exit 0
+```
+
+消费侧退出码契约（三态，与产出侧的 0/2 契约互补）：
+
+- **`exit 0`** = 结构有效且 `policy_version` 可识别（`cmp/0.3.x` 或 `cmp/0.4.x`——旧
+  CDR 向后兼容），可作为结论依据；
+- **`exit 1`** = 结构有效但 `policy_version` 无法识别：按 SPEC §5 版本规则，**必须丢弃
+  该 CDR 并重新判定**，不得部分信任——即使其 `admissibility` 看似可用，任何字段都不得
+  采信；诊断给出处置指引（向产出方确认版本，或用本包重新判定）；
+- **`exit 2`** = 结构/schema 违规（缺必填字段、类型错、`admissibility` 越出四值枚举、
+  `limitations` 缺防篡改声明、CDR 顶层未知字段等）：诊断精确到字段与数组下标（如
+  `limitations[0]`、`admissibility`、`supported_claims[1]`）。
+
+规则来源：required 字段清单**运行时读取**包内 `data/cdr.schema.json`（单一事实来源）；
+`admissibility` 四值枚举、`policy_version` 正则（`cmp/0.3.x|cmp/0.4.x`）与 limitations
+防篡改声明（含 `抗恶意篡改|tamper`）三条信任语义手工镜像同一 schema，并在源码注释同步
+来源。结构违规优先于版本识别：结构已坏时不会落入 `exit 1` 的"可丢弃但结构良好"分支。
+
 ## English
 
-**Exit-code contract common to all journeys** (identical for both CLI entry points):
+**Exit-code contract common to the two producing CLI entry points** (journeys 1–4;
+Journey 5's consumer-side validator has its own three-state 0/1/2 contract — see that
+section):
 
 - **A verdict is not a failure**: `exit 0` means a CDR was produced — all four verdicts
   (`ADMISSIBLE / INADMISSIBLE / PARTIAL / INCONCLUSIVE`) are normal outcomes; scripts must not
@@ -267,3 +296,33 @@ python -m agent_comparability.inspect_log \
 python -m agent_comparability.inspect_log run-a.eval run-b.eval \
     --claim score_comparison --status verified --score-map C=1.0,I=0.0 --task-label same-task
 ```
+
+### Journey 5: Validating a received CDR
+
+Both producing entry points emit CDRs; on the **consuming side**, check a CDR received from
+someone else before trusting it — pure stdlib, zero extra dependencies:
+
+```bash
+python -m agent_comparability.validate cdr.json
+# OK: 结构有效，policy_version 可识别（cmp/0.4.0）  → exit 0
+```
+
+Consumer-side exit-code contract (three states, complementing the producer-side 0/2 contract):
+
+- **`exit 0`** = structurally valid and `policy_version` recognizable (`cmp/0.3.x` or
+  `cmp/0.4.x` — older CDRs stay valid), safe to use as a decision basis;
+- **`exit 1`** = structurally valid but `policy_version` unrecognized: per the SPEC §5 version
+  rule you **must discard the CDR and re-adjudicate** — no partial trust, and none of its
+  fields (including `admissibility`) may be relied upon; the diagnostic gives concrete
+  guidance (confirm the producer's policy version, or re-adjudicate with this package);
+- **`exit 2`** = structural/schema violation (missing required field, wrong type,
+  `admissibility` outside the four-value enum, `limitations` missing the tamper declaration,
+  unknown top-level CDR fields, …): diagnostics are precise to the field and array index
+  (e.g. `limitations[0]`, `admissibility`, `supported_claims[1]`).
+
+Rule provenance: the required-field list is **read at runtime** from the packaged
+`data/cdr.schema.json` (single source of truth); the `admissibility` four-value enum, the
+`policy_version` regex (`cmp/0.3.x | cmp/0.4.x`), and the limitations tamper-declaration rule
+(containing `抗恶意篡改|tamper`) are hand-mirrored from the same schema with their sync source
+cited in code comments. Structural violations take precedence over version recognition: a
+structurally broken CDR never lands in the "discarding but structurally fine" `exit 1` branch.
