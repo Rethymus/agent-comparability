@@ -27,17 +27,60 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison -
 `examples/demo-case.json` 是**合成/示意**样本（SYNTHETIC/illustrative）：两条记录同任务、同模型、
 仅 harness 不同、均为 `verified`、reward 落在 [0,1] 且未声明 `score_scale`。
 
-预期裁决形态（cmp/0.4.0）：
+#### 四种裁决 × 可直接复制的命令
 
-- 实际命令输出 `ADMISSIBLE`：单变量隔离成立（仅 harness 变化），`satisfied_conditions` 含
-  `same_task_id`、`same_model`、`single_variable_isolation` 与默认尺度下的
-  `continuous_score_preserved(...)`，`supported_claims` 为同尺度并排比较（`continuous_score_side_by_side`）；
-- 若把其中一条的 `reward_status` 改为 `unresolved_zero`（0 分）→ 形态变为 `PARTIAL`：支持按
-  verified/unresolved **分列**的率（`per_status_stratified_rate`），禁止合并 fail 率
-  （`pooled_fail_rate` 列入 `unsupported_claims`）；
-- 若 model 与 harness **同时**不同 → 形态变为 `INADMISSIBLE`：`violated_conditions` 含
-  `same_model` 与 `single_variable_isolation`（README §8 即此形态）；
-- 未声明的 `--claim` 类型 → `INCONCLUSIVE`（不猜测）。
+前提：先完成基础安装 `pip install -e .`（见 README §6——src 布局，未安装时
+`python -m agent_comparability` 直接 ModuleNotFoundError），并在**仓库根目录**运行以下命令
+（`examples/...` 为相对路径，在其他目录运行会得到 exit 2 的「无法读取输入文件」）。
+
+四个示例文件都内嵌 `_comment`（SYNTHETIC/ILLUSTRATIVE + 预期裁决及一句「为何」）。以下每条
+「为什么」均摘自实际运行输出的 CDR 字段（真实实跑后摘录，非虚构）：
+
+**ADMISSIBLE（同尺度并排）**——`examples/demo-case.json`：
+
+```bash
+python -m agent_comparability examples/demo-case.json --claim score_comparison
+```
+
+为什么可并排：仅 harness 一个变量变化。`satisfied_conditions` 含 `same_task_id`、`same_model`、
+`single_variable_isolation` 与默认尺度下的 `continuous_score_preserved(...)`；`supported_claims`
+为 `continuous_score_side_by_side(同尺度)`；`violated_conditions` 与 `unsupported_claims` 均为空。
+
+**INADMISSIBLE（混淆，拒绝比较）**——`examples/demo-inadmissible.json`：
+
+```bash
+python -m agent_comparability examples/demo-inadmissible.json --claim score_comparison
+```
+
+为什么拒绝：model 与 harness **同时**不同（两个变量纠缠，效应无法归因）。`violated_conditions`
+含 `same_model` 与 `single_variable_isolation`；`unsupported_claims` 含
+`score_comparison(任务/混淆/尺度条件冲突)`；`supported_claims` 为空（README §8 即此形态）。
+
+**PARTIAL（零分语义混同，只许分列）**——`examples/demo-partial.json`：
+
+```bash
+python -m agent_comparability examples/demo-partial.json --claim score_comparison
+```
+
+为什么只算部分可用：`verified` 的 0 分与 `unresolved_zero` 的 0 分**语义不同**。
+`violated_conditions` 含 `zero_semantics_uniform(verified_zero != unresolved_zero)`；
+`supported_claims` 只支持按状态**分列**的 `per_status_stratified_rate(verified_zero/unresolved_zero 分列)`；
+把两种 0 分合并成单一 fail 率被列入 `unsupported_claims`（`pooled_fail_rate(0 分语义混同)`）。
+
+**INCONCLUSIVE（证据缺失，优先级最高）**——`examples/demo-inconclusive.json`：
+
+```bash
+python -m agent_comparability examples/demo-inconclusive.json --claim score_comparison
+```
+
+为什么无法下结论：记录声明 `trajectory_available=false`（未观察轨迹）。`violated_conditions` 含
+`trace_available`——证据缺失在判定优先级中**高于**其他条件，直接主导裁决。源 reward 如实保留：
+`unknown_conditions` 记 `source_reward_retained_but_unverifiable_by_us`，评分转写仍在
+`supported_claims`（`score_transcription(source_verifier_attested)`），但成功率被列入
+`unsupported_claims`（`success_rate(含证据缺失记录)`）。
+
+未声明的 `--claim` 类型同样返回 `INCONCLUSIVE`（不猜测，`unknown_conditions` 记
+`unrecognized_claim_type`）。
 
 ### 旅程 2：证据清单（Evidence Manifest）
 
@@ -178,19 +221,68 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison -
 model, differing only in harness, both `verified`, rewards within [0,1] with no declared
 `score_scale`.
 
-Expected verdict shapes (cmp/0.4.0):
+#### The four verdicts × copy-paste commands
 
-- The actual command output is `ADMISSIBLE`: single-variable isolation holds (only the harness
-  varies); `satisfied_conditions` include `same_task_id`, `same_model`,
-  `single_variable_isolation` and `continuous_score_preserved(...)` under the implicit default
-  scale; `supported_claims` carry the same-scale side-by-side comparison
-  (`continuous_score_side_by_side`);
-- Changing one record's `reward_status` to `unresolved_zero` (a zero score) → shape becomes
-  `PARTIAL`: per-status **stratified** rates are supported (`per_status_stratified_rate`), the
-  pooled fail rate is forbidden (`pooled_fail_rate` listed in `unsupported_claims`);
-- Changing model **and** harness together → shape becomes `INADMISSIBLE`:
-  `violated_conditions` include `same_model` and `single_variable_isolation` (the README §8 shape);
-- An unrecognized `--claim` type → `INCONCLUSIVE` (no guessing).
+Prerequisites: install the package first — `pip install -e .` (see README §6; src layout, so
+without installation `python -m agent_comparability` fails with ModuleNotFoundError) — and run
+from the **repository root** (`examples/...` are relative paths; running elsewhere yields the
+exit-2 "cannot read input file" error).
+
+All four example files embed a `_comment` (SYNTHETIC/ILLUSTRATIVE + the expected verdict with a
+one-line "why"). Each "why" below is excerpted from the CDR fields of an actual run (transcribed
+from real output, not invented):
+
+**ADMISSIBLE (side-by-side on the same scale)** — `examples/demo-case.json`:
+
+```bash
+python -m agent_comparability examples/demo-case.json --claim score_comparison
+```
+
+Why admissible: only the harness varies. `satisfied_conditions` include `same_task_id`,
+`same_model`, `single_variable_isolation` and `continuous_score_preserved(...)` under the
+implicit default scale; `supported_claims` carry `continuous_score_side_by_side(同尺度)`;
+`violated_conditions` and `unsupported_claims` are both empty.
+
+**INADMISSIBLE (confounded — comparison refused)** — `examples/demo-inadmissible.json`:
+
+```bash
+python -m agent_comparability examples/demo-inadmissible.json --claim score_comparison
+```
+
+Why refused: model **and** harness differ at the same time (two entangled variables, the effect
+cannot be attributed). `violated_conditions` include `same_model` and
+`single_variable_isolation`; `unsupported_claims` include
+`score_comparison(任务/混淆/尺度条件冲突)`; `supported_claims` is empty (the README §8 shape).
+
+**PARTIAL (zero-score semantics differ — stratified only)** — `examples/demo-partial.json`:
+
+```bash
+python -m agent_comparability examples/demo-partial.json --claim score_comparison
+```
+
+Why only partially usable: a `verified` 0 and an `unresolved_zero` 0 **do not mean the same
+thing**. `violated_conditions` include `zero_semantics_uniform(verified_zero != unresolved_zero)`;
+`supported_claims` carry only the per-status **stratified** rate
+(`per_status_stratified_rate(verified_zero/unresolved_zero 分列)`); pooling the two kinds of
+zeros into a single fail rate is listed in `unsupported_claims`
+(`pooled_fail_rate(0 分语义混同)`).
+
+**INCONCLUSIVE (missing evidence — highest priority)** — `examples/demo-inconclusive.json`:
+
+```bash
+python -m agent_comparability examples/demo-inconclusive.json --claim score_comparison
+```
+
+Why no conclusion: the record declares `trajectory_available=false` (no trace observed).
+`violated_conditions` include `trace_available` — missing evidence outranks every other
+condition in the priority ladder and dominates the verdict. The source reward is retained
+verbatim: `unknown_conditions` record `source_reward_retained_but_unverifiable_by_us`, score
+transcription stays in `supported_claims`
+(`score_transcription(source_verifier_attested)`), while the success rate is listed in
+`unsupported_claims` (`success_rate(含证据缺失记录)`).
+
+An unrecognized `--claim` type also returns `INCONCLUSIVE` (no guessing;
+`unknown_conditions` record `unrecognized_claim_type`).
 
 ### Journey 2: Evidence Manifest
 

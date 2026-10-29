@@ -1,5 +1,5 @@
 {
-  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. Fields follow the cmp/0.3.1 record contract; see README §7.",
+  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. Same task, same model, harness-only variation, both verified, rewards within [0,1] with no declared score_scale: score_comparison is expected to yield ADMISSIBLE (side-by-side on the implicit default scale). See README §7 and docs/usage-examples.md 旅程 1 / Journey 1.",
   "id": "demo-synthetic-001",
   "records": [
     {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",

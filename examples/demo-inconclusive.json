@@ -1,0 +1,8 @@
+{
+  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. The record declares trajectory_available=false (no trace was observed): score_comparison is expected to yield INCONCLUSIVE (missing evidence dominates the priority ladder; the source reward is retained verbatim, never deleted). See docs/usage-examples.md 旅程 1 / Journey 1.",
+  "id": "demo-inconclusive-001",
+  "records": [
+    {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",
+     "reward": 0.85, "reward_status": "verified", "trajectory_available": false}
+  ]
+}

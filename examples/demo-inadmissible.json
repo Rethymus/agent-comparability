@@ -1,0 +1,10 @@
+{
+  "_comment": "SYNTHETIC / ILLUSTRATIVE sample — NOT real agent evaluation data. Model AND harness differ across the two records (confounded comparison): score_comparison is expected to yield INADMISSIBLE. See docs/usage-examples.md 旅程 1 / Journey 1.",
+  "id": "demo-inadmissible-001",
+  "records": [
+    {"task_id": "demo-task", "harness": "harness-a", "model": "model-x",
+     "reward": 0.85, "reward_status": "verified"},
+    {"task_id": "demo-task", "harness": "harness-b", "model": "model-y",
+     "reward": 0.60, "reward_status": "verified"}
+  ]
+}
