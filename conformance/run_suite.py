@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 RELEASE = ROOT / "release"
 OUT = ROOT / "conformance-results.json"
 
-from cases import all_pairs  # 共享案例加载器（A+B 全 22 对）——单一事实来源（#8/#10）
+from cases import all_pairs  # 共享案例加载器（A+B+D 全 26 对）——单一事实来源（#8/#10）
 
 from agent_comparability import core
 import independent_impl as indep  # 独立实现（规范一致性受检对象）
@@ -57,7 +57,7 @@ def main() -> int:
     indep_pass = sum(r["ok"] for r in indep_rows)
 
     # --- 指标 1：集成一致性（core 的 CDR 经 Inspect / Pydantic 两条路线分别全量核对）---
-    # 两条路线共用同一 22 对案例（cases.py 加载器）；分别报告执行数/通过数/失败原因。
+    # 两条路线共用同一 26 对案例（A9+B13+D4）（cases.py 加载器）；分别报告执行数/通过数/失败原因。
     integ_rows, pyd_rows = [], []
     inspect_executed = pydantic_executed = False
     inspect_err = pyd_err = None
@@ -118,7 +118,7 @@ def main() -> int:
                      "rows": pyd_rows, "error": pyd_err},
     }
 
-    # --- CDR schema 真实校验（全部 22 个判定输出都必须过 cdr-0.3.1 schema）---
+    # --- CDR schema 真实校验（全部判定输出都必须过 cdr schema）---
     from jsonschema import Draft202012Validator
     schema = json.loads((ROOT / "spec/cdr.schema.json").read_text(encoding="utf-8"))
     validator = Draft202012Validator(schema)
