@@ -2,23 +2,40 @@
 
 ## Unreleased
 
+- None yet.
+
+## v0.5.5 (2026-10-27)
+- (#38) Multilog diagnostic localization (PR #36 review gap): when
+  `records_from_summaries` raises MappingError in the per-log loop, the
+  diagnostic now names the source log (`error: 日志 <path>: <原消息>`) so
+  multi-log operators can tell which log failed; exit-2 contract and the
+  original message content unchanged. Test strengthened to assert the failing
+  log path in stderr alongside the sample id and unmapped value
+- (#39) CI: weekly schedule trigger (`cron "3 3 * * 1"`, Mondays 03:03 UTC) so
+  upstream breakage (e.g. inspect-ai API changes) is caught without anyone
+  pushing; new independent non-required job `compat-py310` (Python 3.10)
+  empirically verifies the `requires-python = ">=3.10"` claim — on 3.10 pip
+  resolves older inspect-ai/pydantic-evals (upstream now needs ≥3.11), and the
+  job proved those older versions work: run_suite 26/26 on all three metrics
+  and 512 tests passed on Python 3.10.22 (first CI run, evidence recorded in
+  PR #39). Required job name `conformance` untouched
+- (#36) Test hardening, no frozen-case changes: new `tests/test_properties_04.py`
+  randomized generalizations of the frozen cmp/0.4.0 D-set (model-only symmetry
+  stays ADMISSIBLE with same_model as honest info item; model+harness confound
+  INADMISSIBLE; causal rejected; missing-trace INCONCLUSIVE dominates; scale
+  gate not relaxed); `tests/test_inspect_log.py` multilog boundaries (epochs=2
+  log + single-sample log merge with per-log repetition_count and faithful
+  per-record artifact refs; unmapped letter score in the second log exits 2
+  with a sample-level locator)
+- (#37) `docs/usage-examples.md`: four real user journeys with copy-paste
+  commands and verdict shapes — offline JSON → CDR with the exit-code contract;
+  --manifest three-state semantics + verify_manifest() audit reuse; single
+  Inspect log with the explicit mapping policy; cross-log comparison with
+  shared --task-label (pooling refused, model-only ADMISSIBLE under cmp/0.4.0).
+  README.md / README.zh-CN.md §7 link to it in both languages
 - (#35) README badge style discipline: the three shields.io badges now carry
-  `style=flat-square` (readme-anatomy dogfood round 1; mechanical fix, zero prose
-  changes, both language files kept in lockstep)
-- (#36) Test hardening, no src/ or frozen-case changes: new
-  `tests/test_properties_04.py` randomized generalizations of the frozen cmp/0.4.0
-  D-set (model-only symmetry stays ADMISSIBLE with same_model as honest info item;
-  model+harness confound INADMISSIBLE; causal rejected; missing-trace INCONCLUSIVE
-  dominates; scale gate not relaxed); `tests/test_inspect_log.py` multilog
-  boundaries (epochs=2 log + single-sample log merge with per-log
-  repetition_count and faithful per-record artifact refs; unmapped letter score in
-  the second log exits 2 with a sample-level locator)
-- (#37) `docs/usage-examples.md`: four real user journeys with copy-paste commands
-  and verdict shapes — offline JSON → CDR with the exit-code contract; --manifest
-  three-state semantics + verify_manifest() audit reuse; single Inspect log with
-  the explicit mapping policy; cross-log comparison with shared --task-label
-  (pooling refused, model-only ADMISSIBLE under cmp/0.4.0). README.md /
-  README.zh-CN.md §7 link to it in both languages
+  `style=flat-square` (readme-anatomy dogfood round 1; mechanical fix, zero
+  prose changes, both language files kept in lockstep)
 
 ## v0.5.4 (2026-10-27)
 - Ships specification **cmp/0.4.0** (PR #33, #27 direction B — single-variable
