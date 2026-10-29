@@ -6,6 +6,8 @@
   (see conformance/boundary-cases.json B5 erratum precedent) and only when a newer
   expectation contradicts an older frozen set.
 - New boundary cases welcome: freeze expectations BEFORE running implementations.
+- AI contributors and coding agents: see [AGENTS.md](AGENTS.md) for the binding
+  rules (instruction-source priority, closed check list, citation and data discipline).
 
 ## Security & disclosure
 
