@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- Examples now cover all four verdicts: new `examples/demo-inadmissible.json` (model+harness
+- None yet.
+
+## v0.5.6 (2026-10-27)
+- (#43) Four-verdict example files + Journey 1 copy-paste commands: new
+  `examples/demo-inadmissible.json` (model+harness
   confounded → INADMISSIBLE), `examples/demo-partial.json` (a verified 0 meets an
   unresolved_zero 0 → PARTIAL, stratified-only) and `examples/demo-inconclusive.json`
   (trajectory_available=false → INCONCLUSIVE, source reward retained verbatim). Each file
@@ -10,8 +14,13 @@
   `examples/demo-case.json`. docs/usage-examples.md Journey 1 (旅程 1, CN+EN) now maps all four
   verdicts to copy-paste commands and explains each "why" with excerpts from actual run output
   (violated/supported/unsupported_claims), replacing the previous hypothetical mutation
-  bullets. Docs/examples layer only — no src/ changes
-- CDR consumer-loop closure: new `python -m agent_comparability.validate cdr.json`
+  bullets. Review round: demo-case.json `_comment` now states its expected verdict too (stale
+  cmp/0.3.1 mention dropped), and the four-verdicts section declares its two prerequisites —
+  install `pip install -e .` per README §6 (src layout) and run from the repository root —
+  with both failure modes reproduced before documenting (ModuleNotFoundError when
+  uninstalled; exit-2 unreadable-input from another cwd). Docs/examples layer only — no src/
+  changes
+- (#42) CDR consumer-loop closure: new `python -m agent_comparability.validate cdr.json`
   (consumer-side validator — check a CDR received from someone else before trusting it;
   pure stdlib, zero extra dependencies, independently runnable). Three-state exit
   contract: 0 = structurally valid and policy_version recognizable (cmp/0.3.x or
@@ -30,6 +39,12 @@
   docs/usage-examples.md gains Journey 5 (bilingual); README §7 (EN+zh) gains the
   consumer-validation sentence. CHANGELOG attribution fix: the #38 multilog diagnostic
   fix split out of the (#36) entry into its own bullet (see v0.5.5 section)
+- (#41) Audit hygiene: the publish-pypi.yml package content gate now requires
+  data/cases-0.4.json (identical list to ci.yml — closes the theoretical release-path
+  gap where CI would catch a missing D-set file but the publish flow would not);
+  run_suite.py/cases.py stale comments updated from '22 pairs / cdr-0.3.1' to the current
+  26-pair (A9+B13+D4) reality (counts were already computed dynamically and correct —
+  comment-only). Zero runtime-behavior change
 
 ## v0.5.5 (2026-10-27)
 - (#38) Multilog MappingError diagnostic fix — standalone entry (split out of the
