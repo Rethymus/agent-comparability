@@ -152,9 +152,13 @@ python -m agent_comparability examples/demo-case.json --claim score_comparison
 数值, "reward_status", ...可选字段}]}`）；Record 未知字段按 SPEC §5 忽略并记入
 `unknown_conditions`。加 `--manifest out.manifest.json` 可同时输出 Evidence
 Manifest，记录制品摘要与证据可信状态（绝不自动升级；见
-[docs/evidence-manifest.md](docs/evidence-manifest.md)）。四个端到端用户旅程
-（离线 JSON、证据清单、单份 Inspect 日志、跨日志比较）的完整示例见
-[docs/usage-examples.md](docs/usage-examples.md)。
+[docs/evidence-manifest.md](docs/evidence-manifest.md)）。五个端到端用户旅程
+（离线 JSON、证据清单、单份 Inspect 日志、跨日志比较、校验收到的 CDR）的完整
+示例见 [docs/usage-examples.md](docs/usage-examples.md)。要校验**收到**的 CDR
+再采信，运行 `python -m agent_comparability.validate cdr.json`——消费侧三退出码
+0/1/2（1 = `policy_version` 无法识别：按 SPEC §5 必须丢弃该 CDR 并重新判定，不得
+部分信任；2 = schema 违规，诊断精确到字段）；见
+[docs/usage-examples.md](docs/usage-examples.md) 旅程 5。
 
 **Python API**：
 

@@ -2,15 +2,35 @@
 
 ## Unreleased
 
-- None yet.
+- CDR consumer-loop closure: new `python -m agent_comparability.validate cdr.json`
+  (consumer-side validator — check a CDR received from someone else before trusting it;
+  pure stdlib, zero extra dependencies, independently runnable). Three-state exit
+  contract: 0 = structurally valid and policy_version recognizable (cmp/0.3.x or
+  cmp/0.4.x — old CDRs stay valid); 1 = structurally valid but unrecognized version —
+  per SPEC §5 the diagnostic instructs 必须丢弃该 CDR 并重新判定，不得部分信任 (discard
+  and re-adjudicate; no partial trust, not even admissibility); 2 = structure/schema
+  violation with field- and index-precise diagnostics (e.g. limitations[0],
+  admissibility, supported_claims[1]). The required-field list is read at runtime from
+  the packaged data/cdr.schema.json (single source of truth); the admissibility
+  four-value enum, the policy_version regex and the limitations tamper contains-rule
+  (抗恶意篡改|tamper) are hand-mirrored with sync-source comments; structural violations
+  dominate version recognition (a broken CDR never lands in the exit-1 branch).
+  tests/test_validate.py: 22 cases written negative-first (module absent → 22 failed),
+  incl. the pipeline identity (adjudicate output passes our own validator), a
+  runtime-schema injection proving required is not hardcoded, and all three exit paths.
+  docs/usage-examples.md gains Journey 5 (bilingual); README §7 (EN+zh) gains the
+  consumer-validation sentence. CHANGELOG attribution fix: the #38 multilog diagnostic
+  fix split out of the (#36) entry into its own bullet (see v0.5.5 section)
 
 ## v0.5.5 (2026-10-27)
-- (#38) Multilog diagnostic localization (PR #36 review gap): when
-  `records_from_summaries` raises MappingError in the per-log loop, the
-  diagnostic now names the source log (`error: 日志 <path>: <原消息>`) so
-  multi-log operators can tell which log failed; exit-2 contract and the
-  original message content unchanged. Test strengthened to assert the failing
-  log path in stderr alongside the sample id and unmapped value
+- (#38) Multilog MappingError diagnostic fix — standalone entry (split out of the
+  (#36) test-hardening bullet after the audit flagged imprecise attribution: a src/
+  fix was folded into a tests-only entry): when `records_from_summaries` raises
+  MappingError in the per-log loop, the diagnostic now names the source log
+  (`error: 日志 <path>: <原消息>`) so multi-log operators can tell which log failed;
+  exit-2 contract and the original message content unchanged. The unmapped-letter-score
+  test (introduced by #36) now asserts the three-element locator in stderr: failing
+  log path + sample id + unmapped value
 - (#39) CI: weekly schedule trigger (`cron "3 3 * * 1"`, Mondays 03:03 UTC) so
   upstream breakage (e.g. inspect-ai API changes) is caught without anyone
   pushing; new independent non-required job `compat-py310` (Python 3.10)
@@ -19,14 +39,15 @@
   job proved those older versions work: run_suite 26/26 on all three metrics
   and 512 tests passed on Python 3.10.22 (first CI run, evidence recorded in
   PR #39). Required job name `conformance` untouched
-- (#36) Test hardening, no frozen-case changes: new `tests/test_properties_04.py`
-  randomized generalizations of the frozen cmp/0.4.0 D-set (model-only symmetry
-  stays ADMISSIBLE with same_model as honest info item; model+harness confound
-  INADMISSIBLE; causal rejected; missing-trace INCONCLUSIVE dominates; scale
-  gate not relaxed); `tests/test_inspect_log.py` multilog boundaries (epochs=2
-  log + single-sample log merge with per-log repetition_count and faithful
-  per-record artifact refs; unmapped letter score in the second log exits 2
-  with a sample-level locator)
+- (#36) Test hardening, no src/ or frozen-case changes (the multilog diagnostic fix
+  that had been folded into this entry now lives in its own (#38) bullet above):
+  new `tests/test_properties_04.py` randomized generalizations of the frozen
+  cmp/0.4.0 D-set (model-only symmetry stays ADMISSIBLE with same_model as honest
+  info item; model+harness confound INADMISSIBLE; causal rejected; missing-trace
+  INCONCLUSIVE dominates; scale gate not relaxed); `tests/test_inspect_log.py`
+  multilog boundaries (epochs=2 log + single-sample log merge with per-log
+  repetition_count and faithful per-record artifact refs; unmapped letter score in
+  the second log exits 2)
 - (#37) `docs/usage-examples.md`: four real user journeys with copy-paste
   commands and verdict shapes — offline JSON → CDR with the exit-code contract;
   --manifest three-state semantics + verify_manifest() audit reuse; single
