@@ -1,14 +1,16 @@
-# 使用示例：五个真实用户旅程 / Usage Examples: Five Real User Journeys
+# 使用示例：六个真实用户旅程 / Usage Examples: Six Real User Journeys
 
-> **English section below.** 覆盖三个 CLI 入口：`python -m agent_comparability`（离线 JSON，#16）、
-> `python -m agent_comparability.inspect_log`（Inspect EvalLog 转换器，#20/#26）与
-> `python -m agent_comparability.validate`（CDR 消费侧校验器）。本文只描述**可直接
+> **English section below.** 覆盖四个 CLI 入口：`python -m agent_comparability`（离线 JSON，#16）、
+> `python -m agent_comparability.inspect_log`（Inspect EvalLog 转换器，#20/#26）、
+> `python -m agent_comparability.validate`（CDR 消费侧校验器）与
+> `python -m agent_comparability doctor`（包环境自检）。本文只描述**可直接
 > 复制的命令**与**预期裁决形态**（判定名、条件名、清单状态名），不展示具体 JSON 全文——以实际运行
 > 输出为准。判定语义的单一来源是 [spec/SPEC.md](../spec/SPEC.md) §3.3。
 
 ## 中文
 
-**产出侧两个 CLI 入口通用的退出码契约**（旅程 1–4；旅程 5 的消费侧校验器另有 0/1/2 三态契约，见该节）：
+**产出侧两个 CLI 入口通用的退出码契约**（旅程 1–4；旅程 5 的消费侧校验器另有 0/1/2 三态
+契约，旅程 6 的 doctor 另有 0/1 两态契约，各见该节）：
 
 - **裁决 ≠ 程序失败**：`exit 0` 表示成功产出 CDR——`ADMISSIBLE / INADMISSIBLE / PARTIAL /
   INCONCLUSIVE` 四种裁决都是正常结果，脚本不应把非 ADMISSIBLE 当作崩溃处理；
@@ -195,11 +197,40 @@ python -m agent_comparability.validate cdr.json
 防篡改声明（含 `抗恶意篡改|tamper`）三条信任语义手工镜像同一 schema，并在源码注释同步
 来源。结构违规优先于版本识别：结构已坏时不会落入 `exit 1` 的"可丢弃但结构良好"分支。
 
+### 旅程 6：自检已安装环境（doctor）
+
+wheel 里没有 `conformance/` 与 `adapters/`（pyproject 只随包分发 `src/` 与 `data/*`），
+从 PyPI 安装的用户无法运行仓库的五项封闭门禁。doctor 是安装侧的只读自诊断——环境
+是否完整（随包冻结案例在位、判定行为与随包预期一致、版本线一致）由它自证：
+
+```bash
+python -m agent_comparability doctor
+# stdout 输出 JSON 报告；stderr 输出一行 verdict；exit 0 = 通过
+```
+
+报告要点（实际运行输出）：`overall`（pass/fail）、双锚点 `package_version`（软件线）
+与 `policy_version`（语义线，与 SPEC 是不同版本空间，不互比），以及五项检查：
+
+| 检查 | 内容 |
+|---|---|
+| `frozen_case_files` | 随包三份冻结案例在位，A/B/D 对数 = 9/13/4（合计 26）；A 集随包只有预期无 records，如实标注 |
+| `frozen_expectations` | B+D 集随包带 records，17 对逐对判定 vs 随包冻结预期（全量核对，超出抽样下限） |
+| `policy_version_line` | 随包 SPEC.md 声明的 policy 版本 == 参考实现的 `POLICY_VERSION` |
+| `demo_cdr` | 内置合成记录可产出演示 CDR，必填字段齐备（required 运行时读自随包 schema） |
+| `schema_validation` | 有 jsonschema（`[suite]` extra）→ 演示 CDR 结构校验；没有 → 如实 `not_run` + 原因 + 安装指引 |
+
+退出码契约（两态）：`exit 0` = 可执行检查全部通过；`exit 1` = 任一检查失败。
+**not_run 不是 pass**：缺可选依赖的检查在报告 `checks_not_run` 中如实列出，绝不静默
+计为通过。doctor 是用户环境自检，**不是**仓库封闭门禁清单（AGENTS.md §3）的成员，
+也不能替代其中任何一项。
+
+边界说明：名为 `doctor` 的输入文件会与该元命令撞名——请改用 `./doctor` 形式或重命名。
+
 ## English
 
 **Exit-code contract common to the two producing CLI entry points** (journeys 1–4;
-Journey 5's consumer-side validator has its own three-state 0/1/2 contract — see that
-section):
+Journey 5's consumer-side validator has its own three-state 0/1/2 contract, and
+Journey 6's doctor has its own two-state 0/1 contract — see those sections):
 
 - **A verdict is not a failure**: `exit 0` means a CDR was produced — all four verdicts
   (`ADMISSIBLE / INADMISSIBLE / PARTIAL / INCONCLUSIVE`) are normal outcomes; scripts must not
@@ -418,3 +449,37 @@ Rule provenance: the required-field list is **read at runtime** from the package
 (containing `抗恶意篡改|tamper`) are hand-mirrored from the same schema with their sync source
 cited in code comments. Structural violations take precedence over version recognition: a
 structurally broken CDR never lands in the "discarding but structurally fine" `exit 1` branch.
+
+### Journey 6: Self-checking the installed environment (doctor)
+
+The wheel ships neither `conformance/` nor `adapters/` (pyproject distributes only
+`src/` and `data/*` with the package), so a PyPI user cannot run the repository's five
+closed gates. The doctor is the install-side read-only self-diagnosis — it proves
+whether the local environment is intact (packaged frozen cases present, adjudication
+matches the packaged expectations, version lines consistent):
+
+```bash
+python -m agent_comparability doctor
+# JSON report on stdout; one verdict line on stderr; exit 0 = pass
+```
+
+Report highlights (from an actual run): `overall` (pass/fail), the dual anchors
+`package_version` (software line) and `policy_version` (semantics line — a different
+version space from the SPEC, not compared against each other), and five checks:
+
+| Check | Content |
+|---|---|
+| `frozen_case_files` | The three packaged frozen-case files are present with A/B/D pair counts 9/13/4 (26 total); the packaged A set is expectations-only (no records) and says so |
+| `frozen_expectations` | The packaged B+D sets carry records; all 17 pairs are adjudicated against packaged frozen expectations (full check, beyond a mere sample) |
+| `policy_version_line` | The policy version declared by the packaged SPEC.md equals the reference implementation's `POLICY_VERSION` |
+| `demo_cdr` | Built-in synthetic records produce a demo CDR with every schema-required key present (required read at runtime from the packaged schema) |
+| `schema_validation` | With jsonschema (the `[suite]` extra) → structural validation of the demo CDR; without → an honest `not_run` + reason + install hint |
+
+Exit-code contract (two states): `exit 0` = every executable check passed; `exit 1` =
+any check failed. **not_run is not pass**: a check skipped for a missing optional
+dependency is listed under `checks_not_run`, never silently counted as passed. The
+doctor is a user-environment self-check — it is **not** a member of the repository's
+closed check list (AGENTS.md §3) and cannot substitute for any item in it.
+
+Edge note: an input file literally named `doctor` collides with this meta-command —
+pass `./doctor` instead, or rename the file.

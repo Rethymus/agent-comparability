@@ -14,6 +14,9 @@
     2 = 输入错误（文件不可读/JSON 语法/契约字段缺失或类型错）——诊断含出错路径；
         无效输入绝不允许被转换为貌似成功的裁决
 
+自检元命令 doctor：python -m agent_comparability doctor —— 包环境只读自诊断
+（PyPI 安装侧环境自证，见 doctor.py），退出码 0/1 与上述产出侧契约无关。
+
 本模块只做契约存在性与类型检查；一切判定语义由 adjudicate() 负责（不重新实现判定表，
 不改规范语义）。未知字段按 SPEC §5 忽略并记入 CDR 的 unknown_conditions，不在此报错。
 """
@@ -71,6 +74,10 @@ def validate_case(case):
 
 
 def main(argv=None) -> int:
+    args = sys.argv[1:] if argv is None else list(argv)
+    if args and args[0] == "doctor":  # 自检元命令分流（不占产出侧输入契约）
+        from .doctor import main as doctor_main
+        return doctor_main()
     p = argparse.ArgumentParser(
         prog="python -m agent_comparability",
         description="离线评测记录 JSON → 结构化 CDR（Comparison Decision Record）")
@@ -81,7 +88,7 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--output", help="CDR 输出文件路径（缺省打印到 stdout）")
     p.add_argument("--manifest", help="同时输出 Evidence Manifest（#18）：输入文件作为证据制品"
                                       "实算 sha256，全部记录 artifact_observed，不含任何独立验证声明")
-    args = p.parse_args(argv)
+    args = p.parse_args(args)
 
     try:
         raw = open(args.input, encoding="utf-8").read()

@@ -51,13 +51,24 @@ and report it as the full check.
 | Self-containment terminal scan | `python conformance/terminal_scan.py` | ci.yml:23-24 |
 | Bilingual docs & links | `python conformance/check_docs.py` | ci.yml:25-26 |
 | Conformance suite (three separated metrics) | `python conformance/run_suite.py` | ci.yml:27-28 |
-| Tests (smoke + properties + gate regressions N1–N7) | `python -m pytest tests/ -q` | ci.yml:33-34 |
+| Tests (smoke + properties + gate regressions N1–N8) | `python -m pytest tests/ -q` | ci.yml:33-34 |
 | Release version consistency | `python conformance/release_gate.py` | ci.yml:35-36 |
 
 CI additionally runs the two adapters, build + twine, and a package-content
 gate (ci.yml:29-54) — those belong to the closed set for the same reason: they
 are documented there. Describing a verification that is not on this list as if
 it were one is fabrication, not diligence.
+
+The `doctor` entry (`python -m agent_comparability doctor`,
+`src/agent_comparability/doctor.py`) is a different kind of check: a read-only
+self-diagnosis of the *installed package environment* for PyPI users, who get
+neither `conformance/` nor `adapters/` in the wheel and so cannot run the
+closed list on an install alone. It is not a member of the closed list and
+never counts as having run one of the five gates above; conversely, changes to
+this repository are verified only by the closed list — a passing doctor says
+nothing about a patch. Its own honesty rule mirrors §1: a check skipped for a
+missing optional dependency is reported as `not_run` with the reason, never
+silently counted as passed.
 
 ## 4. Citation discipline
 

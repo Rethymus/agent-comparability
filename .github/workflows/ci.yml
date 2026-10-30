@@ -30,7 +30,7 @@ jobs:
         run: |
           python adapters/inspect_adapter.py
           python adapters/pydantic_adapter.py
-      - name: Tests (smoke + properties + gate regressions N1-N7)
+      - name: Tests (smoke + properties + gate regressions N1-N8)
         run: python -m pytest tests/ -q
       - name: Release version-consistency gate
         run: python conformance/release_gate.py

@@ -23,6 +23,56 @@
   of obeyed; at most 3 genuinely different approaches per failure, then an
   honest blocked report; tampering with checks to fake a pass is forbidden).
   CONTRIBUTING.md gains a one-line pointer; README §14 (EN+zh) links AGENTS.md
+- Suite artifact dual-anchor provenance + mechanical independence guard for the
+  independent implementation. `conformance/run_suite.py` now writes
+  `policy_version` (cmp/x.y.z from the core constant) and `package_version`
+  (`agent_comparability.__version__`) at the top level of
+  `conformance-results.json` — previously the artifact carried only
+  metrics/case_sets keys (verified: six top-level keys), so it could not be
+  attributed to any spec/implementation version after the fact, which breaks
+  the comparability mission; the adapters' reports already carry
+  policy_version (adapters/inspect_adapter.py precedent), the suite side was
+  the gap. New negative regression N8
+  (`tests/test_gate_regressions.py::test_N8_independent_impl_import_isolation`,
+  following the N1b AST-scan precedent): `conformance/independent_impl.py` must
+  not import `agent_comparability` (or a bare `core`) — the file-header
+  isolation declaration was comment-only, so a future import would silently
+  strip metric 2 of its independence semantics without any error; a positive
+  control proves the scanner detects a planted violation. Companion
+  `test_suite_results_carry_version_anchors` runs the suite in a tmp copy and
+  asserts both anchors in the stdout brief against the in-tree single sources
+  (core constant; `__init__.__version__`, same source release_gate.py:19-21
+  reads). The 26-pair count guard is deliberately not duplicated here — N6/N7
+  already assert pairs_reported==26 at the adapter layer. ci.yml test-step
+  label and the AGENTS.md §3 table row updated N1-N7 → N1-N8
+- Package-side `doctor` self-check entry (`python -m agent_comparability
+  doctor`): read-only, pure-stdlib environment self-diagnosis for PyPI users —
+  the wheel distributes only `src/` and `data/*` (pyproject
+  [tool.setuptools]), so `conformance/`/`adapters/` and the five repo-local
+  closed gates are unavailable on an install, leaving the environment
+  un-self-verifiable (are the packaged frozen cases present? does adjudication
+  match the packaged expectations? do the version lines agree?). Five checks in
+  `src/agent_comparability/doctor.py`: packaged frozen case files present with
+  A/B/D counts 9/13/4 (A set reported honestly as expectations-only, no
+  packaged records); B+D (records packaged) adjudicated pair-by-pair against
+  packaged frozen expectations — all 17, full check rather than a token
+  sample; packaged SPEC.md-declared policy version == core POLICY_VERSION
+  (package `__version__` reported alongside as the software-line anchor — the
+  two are different version spaces per README §12 and are not compared);
+  demo CDR producible from built-in synthetic records with every
+  schema-required key present (required read at runtime from the packaged
+  data/cdr.schema.json); jsonschema structural validation when the `[suite]`
+  extra is installed, otherwise an honest `not_run` with reason and install
+  hint — never silently counted as passed (AGENTS.md §1 discipline). Exit
+  codes: 0 = all executable checks pass, 1 = any check failed. Dispatched
+  through `__main__.py` (`doctor` first token), leaving the producer-side
+  0/2 contract and all existing CLI behavior untouched. `tests/test_doctor.py`:
+  12 cases incl. injected not_run and tampered-fixture negative paths proving
+  the checks can fail. Docs: README §7 (EN+zh), docs/usage-examples.md gains
+  Journey 6 (bilingual; title now six journeys), AGENTS.md §3 expanded with
+  doctor's status (user-environment self-check — not a closed-list member,
+  never counts as running one). No new runtime dependencies (dependencies=[]
+  unchanged); no writes outside stdout/stderr; no SPEC or frozen-case changes
 
 ## v0.5.6 (2026-10-29)
 - (#43) Four-verdict example files + Journey 1 copy-paste commands: new

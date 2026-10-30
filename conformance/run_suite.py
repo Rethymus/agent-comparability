@@ -6,6 +6,11 @@
 指标 2 规范一致性：independent_impl（依规范）对 A+B 全案例的判定 vs 冻结预期。
 指标 3 策略正确性：core 对 A+B 全案例的判定 vs 冻结预期（B 集是 0.2 的 gap 检验，
   允许暴露缺陷——修复须以规范为准，不得改预期）。
+
+产物溯源（双锚点）：conformance-results.json 顶层携带 policy_version（cmp/x.y.z，
+判定语义世代）与 package_version（本包 __version__，软件版本线）——无版本锚点的
+套件产物无法归因到任何规范/实现版本，事后不可比。案例集 A/B/D 计数见 case_sets
+（计数守卫本体在适配器层：N6/N7 断言 pairs_reported==26，不在此重复）。
 """
 
 import json
@@ -23,6 +28,7 @@ OUT = ROOT / "conformance-results.json"
 from cases import all_pairs  # 共享案例加载器（A+B+D 全 26 对）——单一事实来源（#8/#10）
 
 from agent_comparability import core
+from agent_comparability import __version__ as package_version  # 软件版本线（双锚点之二）
 import independent_impl as indep  # 独立实现（规范一致性受检对象）
 
 try:  # 模块级定义以便负向回归测试直接导入（tests/test_gate_regressions.py N5）
@@ -131,6 +137,8 @@ def main() -> int:
     schema_probe = {"validated": len(pairs), "failures": len(schema_fail), "detail": schema_fail[:3]}
 
     result = {
+        "policy_version": core.POLICY_VERSION,      # 语义锚点：cmp/x.y.z（SPEC §5）
+        "package_version": package_version,          # 软件锚点：__init__.__version__
         "metrics_separated": True,
         "metric3_policy_correctness": {"passed": f"{core_pass}/{len(pairs)}", "rows": core_rows},
         "metric2_spec_conformance": {"passed": f"{indep_pass}/{len(pairs)}", "rows": indep_rows},
