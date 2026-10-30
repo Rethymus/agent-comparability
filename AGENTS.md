@@ -51,7 +51,7 @@ and report it as the full check.
 | Self-containment terminal scan | `python conformance/terminal_scan.py` | ci.yml:23-24 |
 | Bilingual docs & links | `python conformance/check_docs.py` | ci.yml:25-26 |
 | Conformance suite (three separated metrics) | `python conformance/run_suite.py` | ci.yml:27-28 |
-| Tests (smoke + properties + gate regressions N1–N8) | `python -m pytest tests/ -q` | ci.yml:33-34 |
+| Tests (smoke + properties + gate regressions N1–N9) | `python -m pytest tests/ -q` | ci.yml:33-34 |
 | Release version consistency | `python conformance/release_gate.py` | ci.yml:35-36 |
 
 CI additionally runs the two adapters, build + twine, and a package-content

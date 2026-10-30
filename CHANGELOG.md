@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased
+
+- Frozen-corpus content address (`case_set_digest`) + repo↔packaged twin
+  identity gate. Gap (verified in-tree): `spec/cdr.schema.json` and
+  `src/agent_comparability/data/cdr.schema.json` are byte-identical today
+  (sha256sum), but no gate compares the twins — run_suite.py reads the spec
+  copy for schema validation while validate.py/doctor.py read the packaged
+  copy, so the two sides could drift silently; and the frozen-cases-a twins
+  have already diverged in metadata — the repo copy is a runtime projection
+  rewritten by adapters/inspect_adapter.py with the current POLICY_VERSION
+  (cmp/0.4.0) while the packaged copy records cmp/0.2.0, an explainable
+  divergence no doc or gate declared. Three changes, all product-level
+  metadata (SPEC adjudication semantics, the 26 frozen expectation pairs and
+  the CDR schema untouched; pure stdlib, `dependencies = []` unchanged):
+  (1) `conformance/cases.py` gains `canonical_digest`/`case_set_digest`
+  (canonical JSON sort_keys+compact → sha256) and `conformance/run_suite.py`
+  writes it at the top level of `conformance-results.json` as a third
+  provenance anchor next to `policy_version`/`package_version` — version
+  anchors attribute an artifact to a generation but cannot see corpus content:
+  tampering records *and* expectations consistently keeps all three metrics
+  green, counts at 26 and both version anchors identical, so two artifacts
+  from different corpora would be misread as comparable; only the content
+  anchor exposes it. (2) `src/agent_comparability/doctor.py` gains check 6
+  `case_set_digest` — a report-only check (status `report`, excluded from
+  pass/fail per the exit-code contract) printing the packaged-corpus digest
+  with no embedded expected value (avoiding a second source of truth): PyPI
+  users compare it against the CI artifact / release notes, closing the
+  producer↔consumer gap (doctor previously proved only package-internal
+  self-consistency, not packaged-corpus == CI-corpus). A set contributes its
+  expectations only (its packaged form has no records); B/D contribute
+  expectations plus records. (3) `conformance/release_gate.py` gains a
+  twin-identity gate: spec/SPEC.md, spec/cdr.schema.json,
+  conformance/boundary-cases.json, conformance/cases-0.4.json must stay
+  byte-identical to their packaged copies, and frozen-cases-a.json must match
+  in expectation *content* (the precondition for digest comparability) — the
+  policy_version metadata divergence is documented (release_gate.py header,
+  README §10/§12/§13 both languages) and scoped out of the byte gate.
+  Regression N9 (`tests/test_gate_regressions.py::
+  test_N9_case_set_digest_exposes_consistent_corpus_tamper`) proves this
+  mechanically: consistent B7 tamper (trajectory_available=false → both
+  implementations deterministically INCONCLUSIVE, expectation synced —
+  flip behavior verified against core and independent_impl before use) →
+  suite exit 0, version anchors and case_sets unchanged, metric1 26/26 both
+  routes, adapters still report pairs_reported==26, digest moved, doctor
+  digest still the baseline (cross-domain divergence exposed); unilateral
+  expectation tamper still intercepted (existing verdict guards not deadened);
+  twin gate red on packaged-schema tamper and on frozen-a expectation drift.
+  The doctor↔loader definition twin (doctor.check_case_set_digest vs
+  cases.case_set_digest — the two definitions cannot share code since
+  conformance/ does not ship in the wheel; precedent: doctor.EXPECTED_COUNTS
+  sync comment) is guarded by
+  tests/test_doctor.py::test_doctor_digest_matches_repo_loader_definition.
+  Digest on the current tree:
+  8f9540d21f3d5915def213439c5523622f0314892a55a99b32299c76e9d770cc.
+  ci.yml test-step label and AGENTS.md §3 row updated N1-N8 → N1-N9
+
 ## v0.5.7 (2026-10-29)
 
 - AGENTS.md added (AI-contributor governance; docs layer only — no src/, spec,

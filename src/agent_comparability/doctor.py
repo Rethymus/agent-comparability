@@ -28,13 +28,25 @@
                             校验；没有 → 如实输出 not run 与原因及安装指引，
                             绝不静默计为通过（AGENTS.md §1 同律：未运行的检查
                             不得计为通过）。
+  6. case_set_digest        随包冻结语料内容寻址摘要（sha256，canonical JSON）。
+                            **报告项（status=report）**：只报告摘要、不内嵌期望值
+                            ——避免成为第二事实源；期望值在 CI 产物
+                            conformance-results.json 顶层 case_set_digest 与发行
+                            说明中，用户将本报告值与之比对（打通生产者↔消费者
+                            比较域）。定义与 conformance/cases.py 的
+                            case_set_digest() 孪生（A 集随包无 records，只锚
+                            预期），一致性由 tests/test_gate_regressions.py N9
+                            守卫；随包语料与 CI 语料的孪生同一性由
+                            conformance/release_gate.py 在仓库/CI 侧守卫。
 
 退出码契约：
-    0 = 所有可执行检查通过（not_run 项在报告 checks_not_run 中如实列出）
+    0 = 所有可执行检查通过（not_run 项在报告 checks_not_run 中如实列出；
+        report 项是纯报告，不参与 pass/fail 判定）
     1 = 任一检查失败（报告 overall=fail；诊断逐项给出）
 
 本模块不做任何判定语义判断之外的事：绝不修改文件、不发网络请求、不缓存状态。
 """
+import hashlib
 import json
 import re
 import sys
@@ -115,6 +127,44 @@ def check_policy_version_line(spec_text):
             "spec_declares": declared, "core": POLICY_VERSION}
 
 
+def _canonical_digest(obj):
+    """canonical JSON（键排序 + 紧凑分隔符，UTF-8）后取 sha256。
+
+    定义孪生：conformance/cases.py 的 canonical_digest（conformance/ 不随 wheel
+    分发，无法 import——两份定义的一致性由 tests/test_gate_regressions.py N9 守卫，
+    先例同 EXPECTED_COUNTS 的同步来源注释）。
+    """
+    payload = json.dumps(obj, sort_keys=True, ensure_ascii=False,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def check_case_set_digest(frozen_a, boundary, cases_04):
+    """检查 6：随包冻结语料内容寻址摘要——**报告项，不判 pass/fail**。
+
+    只报告 sha256、不内嵌期望值（避免第二事实源）：期望值在 CI 产物
+    conformance-results.json 顶层 case_set_digest 与发行说明中，用户将本报告值
+    与之比对；随包语料一旦与 CI 语料分歧（孪生漂移或历史版本包），摘要即不同。
+    A 集随包只有预期无 records（历史冻结形态），只锚预期；B/D 锚预期+records
+    ——与 cases.py 的 case_set_digest() 同一定义。
+    """
+    corpus = {
+        "A": [{"case": c["id"], "claim": k, "expected": v}
+              for c in frozen_a["cases"]
+              for k, v in c["expected_admissibility_by_claim"].items()],
+        "B": [{"case": c["id"], "claim": k, "expected": v, "records": c["records"]}
+              for c in boundary["cases"] for k, v in c["claims"].items()],
+        "D": [{"case": c["id"], "claim": k, "expected": v, "records": c["records"]}
+              for c in cases_04["cases"] for k, v in c["claims"].items()],
+    }
+    return {"status": "report",
+            "algorithm": "sha256(canonical-json:sort_keys+compact,utf-8)",
+            "case_set_digest": _canonical_digest(corpus),
+            "per_set": {k: _canonical_digest(v) for k, v in corpus.items()},
+            "scope": {k: len(v) for k, v in corpus.items()},
+            "compare_hint": "与 CI 产物 conformance-results.json 顶层 case_set_digest / 发行说明比对"}
+
+
 def check_demo_cdr(case, claim, schema):
     """检查 4：演示 CDR 可产出且必填字段齐备（required 运行时读自随包 schema）。"""
     cdr = adjudicate(case, claim).to_dict()
@@ -158,9 +208,11 @@ def run_checks():
     c3 = check_policy_version_line(spec_text)
     c4, cdr = check_demo_cdr(_DEMO_CASE, _DEMO_CLAIM, schema)
     c5 = check_schema_validation(cdr, schema)
+    c6 = check_case_set_digest(frozen_a, boundary, cases_04)
 
     checks = {"frozen_case_files": c1, "frozen_expectations": c2,
-              "policy_version_line": c3, "demo_cdr": c4, "schema_validation": c5}
+              "policy_version_line": c3, "demo_cdr": c4, "schema_validation": c5,
+              "case_set_digest": c6}
     any_fail = any(v["status"] == "fail" for v in checks.values())
     return {
         "overall": "fail" if any_fail else "pass",
