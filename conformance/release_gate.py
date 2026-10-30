@@ -51,16 +51,18 @@ def main() -> int:
     spec = (ROOT / "spec/SPEC.md").read_text(encoding="utf-8")
     if "cmp/0.4.0" not in spec:
         errs.append("SPEC 版本行缺失（cmp/0.4.0）")
+    twin_errs = []
     for repo_rel, pkg_rel in _TWIN_FILES:
         if (ROOT / repo_rel).read_bytes() != (ROOT / pkg_rel).read_bytes():
-            errs.append(f"孪生漂移: {repo_rel} != {pkg_rel}（随包副本须与仓库副本逐字节一致）")
+            twin_errs.append(f"孪生漂移: {repo_rel} != {pkg_rel}（随包副本须与仓库副本逐字节一致）")
     if _a_expectations(_FROZEN_A_REPO) != _a_expectations(_FROZEN_A_PKG):
-        errs.append(f"frozen-cases-a 预期内容漂移: {_FROZEN_A_REPO} vs {_FROZEN_A_PKG}"
-                    "（A 集预期须一致——case_set_digest 跨域可比前提；"
-                    "policy_version 元数据差异属已知留痕，不在本门范围）")
+        twin_errs.append(f"frozen-cases-a 预期内容漂移: {_FROZEN_A_REPO} vs {_FROZEN_A_PKG}"
+                         "（A 集预期须一致——case_set_digest 跨域可比前提；"
+                         "policy_version 元数据差异属已知留痕，不在本门范围）")
+    errs.extend(twin_errs)
     for e in errs:
         print("RELEASE GATE FAIL:", e)
-    twins = "byte-identical" if not any("孪生" in e or "frozen-cases-a" in e for e in errs) else "FAIL"
+    twins = "byte-identical" if not twin_errs else "FAIL"  # 结构化判定：孪生错误单独收集，不靠文案匹配
     print(f"release gate: pyproject={py_ver} runtime={rt_ver} tag=v{expected or '(未指定)'} "
           f"twins={twins}", "OK" if not errs else "FAIL")
     return 1 if errs else 0

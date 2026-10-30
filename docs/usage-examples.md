@@ -209,7 +209,8 @@ python -m agent_comparability doctor
 ```
 
 报告要点（实际运行输出）：`overall`（pass/fail）、双锚点 `package_version`（软件线）
-与 `policy_version`（语义线，与 SPEC 是不同版本空间，不互比），以及五项检查：
+与 `policy_version`（语义线，与 SPEC 是不同版本空间，不互比），以及六个检查条目
+（五项 pass/fail 检查加一项纯报告项）：
 
 | 检查 | 内容 |
 |---|---|
@@ -218,8 +219,11 @@ python -m agent_comparability doctor
 | `policy_version_line` | 随包 SPEC.md 声明的 policy 版本 == 参考实现的 `POLICY_VERSION` |
 | `demo_cdr` | 内置合成记录可产出演示 CDR，必填字段齐备（required 运行时读自随包 schema） |
 | `schema_validation` | 有 jsonschema（`[suite]` extra）→ 演示 CDR 结构校验；没有 → 如实 `not_run` + 原因 + 安装指引 |
+| `case_set_digest` | 纯报告项：随包冻结语料内容摘要（canonical JSON 的 sha256——A 集预期，B/D 预期+records）。不内嵌期望值：将其与 CI 产物 `conformance-results.json` 顶层 `case_set_digest` 或发行说明比对，确认两侧判定的是同一份语料 |
 
 退出码契约（两态）：`exit 0` = 可执行检查全部通过；`exit 1` = 任一检查失败。
+检查状态分三种：`pass`/`fail` 决定判定，`not_run` 是诚实跳过，`report`
+（`case_set_digest`）仅作报告、绝不影响判定。
 **not_run 不是 pass**：缺可选依赖的检查在报告 `checks_not_run` 中如实列出，绝不静默
 计为通过。doctor 是用户环境自检，**不是**仓库封闭门禁清单（AGENTS.md §3）的成员，
 也不能替代其中任何一项。
@@ -465,7 +469,8 @@ python -m agent_comparability doctor
 
 Report highlights (from an actual run): `overall` (pass/fail), the dual anchors
 `package_version` (software line) and `policy_version` (semantics line — a different
-version space from the SPEC, not compared against each other), and five checks:
+version space from the SPEC, not compared against each other), and six check entries
+(five pass/fail checks plus one report-only entry):
 
 | Check | Content |
 |---|---|
@@ -474,10 +479,14 @@ version space from the SPEC, not compared against each other), and five checks:
 | `policy_version_line` | The policy version declared by the packaged SPEC.md equals the reference implementation's `POLICY_VERSION` |
 | `demo_cdr` | Built-in synthetic records produce a demo CDR with every schema-required key present (required read at runtime from the packaged schema) |
 | `schema_validation` | With jsonschema (the `[suite]` extra) → structural validation of the demo CDR; without → an honest `not_run` + reason + install hint |
+| `case_set_digest` | Report-only: the packaged frozen-corpus content digest (sha256 over canonical JSON — A-set expectations, B/D expectations plus records). No embedded expected value: compare it against `case_set_digest` in a CI `conformance-results.json` or the release notes to confirm both sides adjudicated the same corpus |
 
 Exit-code contract (two states): `exit 0` = every executable check passed; `exit 1` =
-any check failed. **not_run is not pass**: a check skipped for a missing optional
-dependency is listed under `checks_not_run`, never silently counted as passed. The
+any check failed. Check statuses come in three kinds: `pass`/`fail` decide the
+verdict, `not_run` is an honest skip, and `report` (`case_set_digest`) is
+informational only — it never affects the verdict. **not_run is not pass**: a check
+skipped for a missing optional dependency is listed under `checks_not_run`, never
+silently counted as passed. The
 doctor is a user-environment self-check — it is **not** a member of the repository's
 closed check list (AGENTS.md §3) and cannot substitute for any item in it.
 

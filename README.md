@@ -175,7 +175,8 @@ diagnostics); see Journey 5 in [docs/usage-examples.md](docs/usage-examples.md).
 To self-check the installed environment, run `python -m agent_comparability doctor` —
 a read-only diagnosis (packaged frozen cases present with A/B/D counts, adjudication
 vs packaged frozen expectations, spec/policy version line consistent, demo CDR
-producible) for PyPI users, who get neither `conformance/` nor `adapters/` in the
+producible, packaged-corpus content digest reported as a report-only entry) for PyPI
+users, who get neither `conformance/` nor `adapters/` in the
 wheel and therefore cannot run the repo-local gates. A missing optional dependency is
 reported as *not run* with the reason — never silently counted as passed.
 Exit 0 = pass, 1 = any check failed; see Journey 6 in

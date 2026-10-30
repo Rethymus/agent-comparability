@@ -36,7 +36,9 @@
   byte-identical to their packaged copies, and frozen-cases-a.json must match
   in expectation *content* (the precondition for digest comparability) — the
   policy_version metadata divergence is documented (release_gate.py header,
-  README §10/§12/§13 both languages) and scoped out of the byte gate.
+  README §10/§12/§13 both languages, docs/usage-examples.md Journey 6 both
+  languages — doctor enumeration updated five → six check entries with the
+  third `report` status kind) and scoped out of the byte gate.
   Regression N9 (`tests/test_gate_regressions.py::
   test_N9_case_set_digest_exposes_consistent_corpus_tamper`) proves this
   mechanically: consistent B7 tamper (trajectory_available=false → both
