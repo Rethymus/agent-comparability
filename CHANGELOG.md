@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.5.7 (2026-10-29)
 
 - AGENTS.md added (AI-contributor governance; docs layer only — no src/, spec,
   or frozen-case changes): five sections, each anchored to mechanisms that
@@ -23,6 +23,9 @@
   of obeyed; at most 3 genuinely different approaches per failure, then an
   honest blocked report; tampering with checks to fake a pass is forbidden).
   CONTRIBUTING.md gains a one-line pointer; README §14 (EN+zh) links AGENTS.md
+- Audit-drift doc corrections (docs layer only): CHANGELOG release dates aligned
+  with actual merge dates, README pair-count stale 22→26 (A9+B13+D4), OPEN-ISSUES
+  refreshed — keeping recorded history consistent with the shipped trees
 - Suite artifact dual-anchor provenance + mechanical independence guard for the
   independent implementation. `conformance/run_suite.py` now writes
   `policy_version` (cmp/x.y.z from the core constant) and `package_version`
