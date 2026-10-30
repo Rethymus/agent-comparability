@@ -158,7 +158,13 @@ Manifest，记录制品摘要与证据可信状态（绝不自动升级；见
 再采信，运行 `python -m agent_comparability.validate cdr.json`——消费侧三退出码
 0/1/2（1 = `policy_version` 无法识别：按 SPEC §5 必须丢弃该 CDR 并重新判定，不得
 部分信任；2 = schema 违规，诊断精确到字段）；见
-[docs/usage-examples.md](docs/usage-examples.md) 旅程 5。
+[docs/usage-examples.md](docs/usage-examples.md) 旅程 5。要自检已安装环境，运行
+`python -m agent_comparability doctor`——只读诊断（随包冻结案例在位且 A/B/D 计数
+一致、判定与随包冻结预期一致、spec/policy 版本线一致、演示 CDR 可产出），面向
+PyPI 用户——wheel 不含 `conformance/` 与 `adapters/`，仓库本地门禁在安装侧无从
+运行。缺可选依赖时该项如实报告 *not run* 及原因——绝不静默计为通过。
+退出码 0 = 通过，1 = 有检查失败；见
+[docs/usage-examples.md](docs/usage-examples.md) 旅程 6。
 
 **Python API**：
 

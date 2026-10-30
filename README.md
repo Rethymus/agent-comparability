@@ -172,6 +172,14 @@ someone else before trusting it, run `python -m agent_comparability.validate cdr
 consumer-side exit codes 0/1/2 (1 = unrecognized `policy_version`: discard the CDR and
 re-adjudicate per SPEC §5, no partial trust; 2 = schema violation with field-precise
 diagnostics); see Journey 5 in [docs/usage-examples.md](docs/usage-examples.md).
+To self-check the installed environment, run `python -m agent_comparability doctor` —
+a read-only diagnosis (packaged frozen cases present with A/B/D counts, adjudication
+vs packaged frozen expectations, spec/policy version line consistent, demo CDR
+producible) for PyPI users, who get neither `conformance/` nor `adapters/` in the
+wheel and therefore cannot run the repo-local gates. A missing optional dependency is
+reported as *not run* with the reason — never silently counted as passed.
+Exit 0 = pass, 1 = any check failed; see Journey 6 in
+[docs/usage-examples.md](docs/usage-examples.md).
 
 **Python API**:
 

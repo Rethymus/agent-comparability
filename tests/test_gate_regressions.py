@@ -1,5 +1,6 @@
-"""永久回归：负向门禁 N1-N7 的可执行断言（原始失败记录见 docs/internal/VALIDATION.md
-与 git历史 ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。"""
+"""永久回归：负向门禁 N1-N8 的可执行断言（原始失败记录见 docs/internal/VALIDATION.md
+与 git历史 ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。
+文件另含套件产物版本锚点回归（非负向，见 test_suite_results_carry_version_anchors）。"""
 import importlib
 import json
 import shutil
@@ -160,6 +161,57 @@ def test_N7_adapters_runnable_standalone_any_order():
         "inspect 后跑覆盖了 pydantic 段（N7 回归）"
     assert "route1_reference" in res2, "inspect 自身段落缺失（N7 回归）"
     shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _top_level_imports(source):
+    """AST 提取 import 语句的根模块名集合（N1b 先例的共享实现，不依赖字符串模式）。"""
+    import ast
+    mods = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            mods |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            mods.add(node.module.split(".")[0])
+    return mods
+
+
+def test_N8_independent_impl_import_isolation():
+    """独立实现机械自检：independent_impl.py 不得 import 参考实现（agent_comparability）。
+    文件头的隔离声明只是注释、无机械守卫——一旦有人让指标 2 的实现 import core，
+    套件将静默失去独立语义而不报错（指标 2 退化为同源复读）。按 N1b AST 扫描先例执行，
+    并以阳性对照证明扫描器本身能发现违规（守卫不得因解析逻辑 bug 而恒真）。"""
+    banned = "agent_comparability"
+    src = (ROOT / "conformance/independent_impl.py").read_text(encoding="utf-8")
+    mods = _top_level_imports(src)
+    assert banned not in mods, \
+        f"independent_impl 违规依赖参考实现 {banned}（指标 2 独立性被破坏，N8 回归）"
+    assert "core" not in mods, f"independent_impl 出现可疑裸导入: core（N8 回归）"
+    # 阳性对照：同一扫描器对违规 import 必须报警
+    assert banned in _top_level_imports("from agent_comparability import core\n")
+    assert banned in _top_level_imports("import agent_comparability.core\n")
+
+
+def test_suite_results_carry_version_anchors():
+    """产物溯源回归：run_suite 写出的结果必须携带 policy_version（语义锚点）与
+    package_version（软件锚点）——无版本锚点的套件产物无法归因到任何规范/实现版本，
+    事后不可比（可比性使命的前提）。锚点值与树内单一事实来源核对：
+    policy_version 取 core 常量，package_version 取 __init__（release_gate.py:19-21 同源）。"""
+    import re
+    pytest.importorskip("pydantic_evals")
+    pytest.importorskip("inspect_ai")
+    tmp = _copy_tree()
+    r = _run(tmp, "conformance/run_suite.py")
+    shutil.rmtree(tmp, ignore_errors=True)
+    assert r.returncode == 0, f"套件未通过，锚点检查失去前提: {r.stdout[-400:]} {r.stderr[-400:]}"
+    brief = json.loads(r.stdout)
+    core_src = (ROOT / "src/agent_comparability/core.py").read_text(encoding="utf-8")
+    pv = re.search(r'POLICY_VERSION = "([^"]+)"', core_src).group(1)
+    init_src = (ROOT / "src/agent_comparability/__init__.py").read_text(encoding="utf-8")
+    ver = re.search(r'__version__ = "([^"]+)"', init_src).group(1)
+    assert brief.get("policy_version") == pv, \
+        f"结果缺语义锚点或不一致: {brief.get('policy_version')!r} != {pv!r}"
+    assert brief.get("package_version") == ver, \
+        f"结果缺软件锚点或不一致: {brief.get('package_version')!r} != {ver!r}"
 
 
 def test_assertions_not_skipped_or_weakened():
