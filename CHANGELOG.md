@@ -58,7 +58,7 @@
   8f9540d21f3d5915def213439c5523622f0314892a55a99b32299c76e9d770cc.
   ci.yml test-step label and AGENTS.md §3 row updated N1-N8 → N1-N9
 
-## v0.5.7 (2026-10-29)
+## v0.5.7 (2026-10-30)
 
 - AGENTS.md added (AI-contributor governance; docs layer only — no src/, spec,
   or frozen-case changes): five sections, each anchored to mechanisms that
