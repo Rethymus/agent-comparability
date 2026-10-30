@@ -175,7 +175,8 @@ diagnostics); see Journey 5 in [docs/usage-examples.md](docs/usage-examples.md).
 To self-check the installed environment, run `python -m agent_comparability doctor` —
 a read-only diagnosis (packaged frozen cases present with A/B/D counts, adjudication
 vs packaged frozen expectations, spec/policy version line consistent, demo CDR
-producible) for PyPI users, who get neither `conformance/` nor `adapters/` in the
+producible, packaged-corpus content digest reported as a report-only entry) for PyPI
+users, who get neither `conformance/` nor `adapters/` in the
 wheel and therefore cannot run the repo-local gates. A missing optional dependency is
 reported as *not run* with the reason — never silently counted as passed.
 Exit 0 = pass, 1 = any check failed; see Journey 6 in
@@ -295,6 +296,8 @@ ambiguity or misread / adapter bug).
 
 The full suite run requires the adapter extras (`.[suite,inspect,pydantic]`) — a missing adapter is treated as FAIL, not skipped.
 
+`conformance-results.json` carries three provenance anchors: `policy_version` (spec generation), `package_version` (software line), and `case_set_digest` — a sha256 over the frozen corpus in canonical JSON (the A set contributes its expectations, its packaged form has no records; B/D also their records). Version anchors attribute an artifact to a generation but cannot see corpus content: tampering records *and* expectations consistently leaves metrics green, counts at 26 and both version anchors untouched — only the content anchor exposes it. `python -m agent_comparability doctor` reports the packaged-corpus digest (report-only; no embedded expected value): compare it with the CI artifact or the release notes to confirm both sides adjudicated the same corpus.
+
 ## 11. Inspect AI / Pydantic Evals Integrations
 
 ```bash
@@ -319,11 +322,20 @@ Three distinct lines: software tag (e.g. `v0.5.0`), specification `cmp/0.4.0`
 require a spec major bump (SPEC §5). See [CHANGELOG](CHANGELOG.md) for the full tag lineage
 (v0.3.1–v0.3.6 are deprecated candidates kept immutably for the record).
 
+The packaged twins under `src/agent_comparability/data/` must stay identical to
+their repo counterparts: `spec/SPEC.md`, `spec/cdr.schema.json`,
+`conformance/boundary-cases.json` and `conformance/cases-0.4.json`
+byte-identical; `frozen-cases-a.json` identical in expectation *content* — the
+repo copy is a runtime projection rewritten by the inspect adapter with the
+current `policy_version`, a documented metadata divergence. `conformance/release_gate.py`
+enforces this; without it, the digest a PyPI user sees and the digest in a CI
+artifact could silently drift apart.
+
 ## 13. Limitations
 
 - Experimental specification; self-tested conformance, **no external certification**
 - Single-writer trust domain: digest equality proves non-divergence, not
-  tamper-resistance (SPEC §1)
+  tamper-resistance (SPEC §1) — this applies to the suite's `case_set_digest` too
 - No repetition/cost modeling inside adjudication (handled by callers)
 - Chinese/English docs kept equivalent; translation drift tracked in CI link checks
 

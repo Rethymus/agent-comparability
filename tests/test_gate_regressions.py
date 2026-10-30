@@ -1,6 +1,7 @@
-"""永久回归：负向门禁 N1-N8 的可执行断言（原始失败记录见 docs/internal/VALIDATION.md
+"""永久回归：负向门禁 N1-N9 的可执行断言（原始失败记录见 docs/internal/VALIDATION.md
 与 git历史 ad14fb5/541494d 修复提交；N5/N6 源自 #10，N7 源自 #12）。每条测试在 tmp 副本上注入违规并断言对应门禁退出码非零。
-文件另含套件产物版本锚点回归（非负向，见 test_suite_results_carry_version_anchors）。"""
+文件另含套件产物版本锚点回归（非负向，见 test_suite_results_carry_version_anchors）
+与 N9 内容锚回归（一致篡改语料时唯 case_set_digest 暴露差异）。"""
 import importlib
 import json
 import shutil
@@ -222,3 +223,101 @@ def test_assertions_not_skipped_or_weakened():
         s = f.read_text(encoding="utf-8")
         assert "pytest.skip" not in s and "@pytest.mark.skip" not in s, f"{f.name} 含 skip"
         assert "pytest.warns" not in s, f"{f.name} 断言降级为 warns"
+
+
+def _doctor_report(tmp):
+    """在 tmp 树上运行 doctor（PYTHONPATH=tmp/src → 读 tmp 的随包 data 副本，非安装副本）。"""
+    import os
+    env = {**os.environ, "PYTHONPATH": str(tmp / "src")}
+    r = subprocess.run([sys.executable, "-m", "agent_comparability", "doctor"],
+                       cwd=tmp, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, f"doctor 前提失败: {r.stdout[-300:]} {r.stderr[-300:]}"
+    return json.loads(r.stdout)
+
+
+def test_N9_case_set_digest_exposes_consistent_corpus_tamper():
+    """N9（内容锚回归）：B 集记录+预期**一致篡改**（B7 轨迹缺失 → 两实现确定同为
+    INCONCLUSIVE，预期同步改）后，三指标仍全过、退出码 0、版本锚点不变、26 对计数
+    不变（适配器层 pairs_reported==26 照常通过，N6/N7 机制）——唯 case_set_digest
+    暴露语料内容差异。版本锚点锚不住输入语料：记录+预期一致篡改的套件产物与 CI
+    产物锚点完全相同、会被误当可比，内容锚补上这一盲区（doctor 只报告随包摘要、
+    不内嵌期望值，避免第二事实源）。阳性对照：①定义孪生——doctor 随包摘要 ==
+    仓库加载器摘要（conformance/cases.py 与 doctor.py 两份定义不漂移；conformance/
+    不随 wheel 分发故无法共用代码，先例同 doctor.EXPECTED_COUNTS 同步注释）；
+    ②仓库侧语料篡改后 doctor 摘要纹丝不动 → 跨域比对立即分歧（生产者↔消费者
+    比较域被打通）；③预期单方面篡改仍被套件拦截（既有判定守卫未被内容锚钝化）；
+    ④孪生门负向：篡改随包 data 副本或 frozen-cases-a 预期内容 → release_gate
+    非零退出（policy_version 元数据已知留痕不在孪生门范围，见 release_gate.py）。"""
+    pytest.importorskip("pydantic_evals")
+    pytest.importorskip("inspect_ai")
+    tmp = _copy_tree()
+    r0 = _run(tmp, "conformance/run_suite.py")
+    assert r0.returncode == 0, f"基线套件未过，N9 失去前提: {r0.stdout[-400:]} {r0.stderr[-400:]}"
+    brief0 = json.loads(r0.stdout)
+    d0 = brief0["case_set_digest"]
+    assert len(d0) == 64, "摘要须为 sha256 hex（64 位）"
+    # 阳性对照①：定义孪生——doctor（随包 data 副本）== 仓库加载器（conformance/+adapters CASES）
+    doc0 = _doctor_report(tmp)["checks"]["case_set_digest"]
+    assert doc0["case_set_digest"] == d0, "doctor 摘要定义与 cases.py 孪生漂移（N9 守卫本体）"
+    assert doc0["scope"] == {"A": 9, "B": 13, "D": 4}
+
+    # 一致篡改：B7 记录轨迹缺失（两实现确定同为 INCONCLUSIVE，实测见本测试提交说明）+ 预期同步改
+    cases = tmp / "conformance/boundary-cases.json"
+    d = json.loads(cases.read_text(encoding="utf-8"))
+    b7 = next(x for x in d["cases"] if x["id"] == "B7")
+    for rec in b7["records"]:
+        rec["trajectory_available"] = False
+    b7["claims"]["score_comparison"] = "INCONCLUSIVE"
+    cases.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # 篡改后：套件全绿、锚点/计数不变，唯摘要变化；doctor（随包侧未动）摘要仍是 d0
+    r1 = _run(tmp, "conformance/run_suite.py")
+    assert r1.returncode == 0, f"一致篡改后套件应仍全过: {r1.stdout[-400:]} {r1.stderr[-400:]}"
+    brief1 = json.loads(r1.stdout)
+    assert brief1["policy_version"] == brief0["policy_version"], "语义锚点不应因语料篡改而变"
+    assert brief1["package_version"] == brief0["package_version"], "软件锚点不应因语料篡改而变"
+    assert brief1["case_sets"] == brief0["case_sets"], "计数不应因语料篡改而变（仍 A9/B13/D4）"
+    m1 = brief1["metric1_integration_consistency"]
+    assert m1["inspect"] == m1["pydantic"] == "26/26", "集成双路线应仍全 26 对"
+    assert brief1["case_set_digest"] != d0, "内容锚必须暴露一致篡改（N9 本体）"
+    # 阳性对照②：随包侧（doctor 视角）未动 → 摘要仍是 d0，与被篡改的 CI 产物摘要分歧
+    doc1 = _doctor_report(tmp)["checks"]["case_set_digest"]
+    assert doc1["case_set_digest"] == d0 != brief1["case_set_digest"], \
+        "跨域比对必须暴露语料分歧（生产者↔消费者比较域）"
+    # 适配器层计数守卫照常：N6/N7 的 pairs_reported==26 在被篡改树上仍全过
+    assert _run(tmp, "adapters/inspect_adapter.py").returncode == 0, "inspect 适配器应仍通过"
+    r_pyd = _run(tmp, "adapters/pydantic_adapter.py")
+    shutil.rmtree(tmp, ignore_errors=True)
+    assert r_pyd.returncode == 0, "pydantic 适配器应仍通过（一致篡改不破坏判定守卫）"
+    assert '"pairs_reported": 26' in r_pyd.stdout, "适配器计数守卫应仍报告全 26 对（N6/N7 机制）"
+
+    # 阳性对照③：预期单方面篡改（不碰记录）→ 既有判定守卫仍拦截（守卫未被钝化）
+    tmp2 = _copy_tree()
+    cases2 = tmp2 / "conformance/boundary-cases.json"
+    d = json.loads(cases2.read_text(encoding="utf-8"))
+    next(x for x in d["cases"] if x["id"] == "B7")["claims"]["score_comparison"] = "INADMISSIBLE"
+    cases2.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    r2 = _run(tmp2, "conformance/run_suite.py")
+    shutil.rmtree(tmp2, ignore_errors=True)
+    assert r2.returncode != 0, "预期单方面篡改未被拦截（判定守卫被内容锚钝化，N9 对照）"
+
+    # 阳性对照④：孪生门——干净树过；篡改随包 schema 副本 / frozen-a 预期内容 → 红
+    tmp3 = _copy_tree()
+    assert _run(tmp3, "conformance/release_gate.py").returncode == 0, "干净树孪生门应通过"
+    schema_pkg = tmp3 / "src/agent_comparability/data/cdr.schema.json"
+    schema_pkg.write_text(
+        schema_pkg.read_text(encoding="utf-8").replace("requested_claim", "requested_claim_x"),
+        encoding="utf-8")
+    assert _run(tmp3, "conformance/release_gate.py").returncode != 0, \
+        "随包 data 副本篡改未被孪生门拦截（N9 孪生门负向）"
+    fa_repo = tmp3 / "conformance/frozen-cases-a.json"
+    fa = json.loads(fa_repo.read_text(encoding="utf-8"))
+    first = fa["cases"][0]
+    claim0 = next(iter(first["expected_admissibility_by_claim"]))
+    cur = first["expected_admissibility_by_claim"][claim0]
+    first["expected_admissibility_by_claim"][claim0] = \
+        "INADMISSIBLE" if cur != "INADMISSIBLE" else "ADMISSIBLE"
+    fa_repo.write_text(json.dumps(fa, ensure_ascii=False, indent=2), encoding="utf-8")
+    r3 = _run(tmp3, "conformance/release_gate.py")
+    shutil.rmtree(tmp3, ignore_errors=True)
+    assert r3.returncode != 0, "frozen-cases-a 预期内容漂移未被孪生门拦截（N9 孪生门负向）"

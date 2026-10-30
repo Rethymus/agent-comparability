@@ -160,7 +160,8 @@ Manifest，记录制品摘要与证据可信状态（绝不自动升级；见
 部分信任；2 = schema 违规，诊断精确到字段）；见
 [docs/usage-examples.md](docs/usage-examples.md) 旅程 5。要自检已安装环境，运行
 `python -m agent_comparability doctor`——只读诊断（随包冻结案例在位且 A/B/D 计数
-一致、判定与随包冻结预期一致、spec/policy 版本线一致、演示 CDR 可产出），面向
+一致、判定与随包冻结预期一致、spec/policy 版本线一致、演示 CDR 可产出、随包语料
+内容摘要以纯报告项形式给出），面向
 PyPI 用户——wheel 不含 `conformance/` 与 `adapters/`，仓库本地门禁在安装侧无从
 运行。缺可选依赖时该项如实报告 *not run* 及原因——绝不静默计为通过。
 退出码 0 = 通过，1 = 有检查失败；见
@@ -277,6 +278,8 @@ flowchart LR
 
 完整套件运行需要适配器扩展（`.[suite,inspect,pydantic]`）——适配器缺失按 FAIL 处理，不会静默跳过。
 
+`conformance-results.json` 顶层携带三个溯源锚点：`policy_version`（规范世代）、`package_version`（软件版本线）与 `case_set_digest`——冻结语料 canonical JSON 的 sha256（A 集贡献预期，其随包形态无 records；B/D 同时贡献 records）。版本锚点把产物归因到世代，却看不见语料内容：对记录与预期做**一致篡改**（预期随记录同步改）时指标仍全绿、计数仍 26、两个版本锚点纹丝不动——唯有内容锚暴露差异。`python -m agent_comparability doctor` 报告随包语料摘要（纯报告项，不内嵌期望值）：将其与 CI 产物或发行说明比对，确认两侧判定的是同一份语料。
+
 ## 11. Inspect AI / Pydantic Evals 集成
 
 ```bash
@@ -295,10 +298,12 @@ Pydantic 评估器检查**被评测 task 的真实输出**（`ctx.output`）与�
 
 三条独立版本线：软件 tag（如 `v0.5.0`）、规范 `cmp/0.4.0`（在 SPEC 内）、`agent_comparability.__version__`。判定表变更须规范升 major（SPEC §5）。完整 tag 谱系见 [CHANGELOG](CHANGELOG.md)（v0.3.1–v0.3.6 为保留不动的废弃候选）。
 
+随包孪生（`src/agent_comparability/data/`）必须与仓库副本一致：`spec/SPEC.md`、`spec/cdr.schema.json`、`conformance/boundary-cases.json`、`conformance/cases-0.4.json` 逐字节一致；`frozen-cases-a.json` **预期内容**一致——仓库副本是 inspect 适配器以当前 `policy_version` 运行时重写的投影，元数据差异属已声明的留痕。该同一性由 `conformance/release_gate.py` 守卫——否则 PyPI 用户看到的摘要与 CI 产物摘要可能静默漂移、不可比。
+
 ## 13. 局限
 
 - 实验性规范；自测一致性，**无外部认证**
-- 单写信任域：摘要一致仅证明未分叉，不证明抗篡改（SPEC §1）
+- 单写信任域：摘要一致仅证明未分叉，不证明抗篡改（SPEC §1）——套件的 `case_set_digest` 同理
 - 判定内部不含重复次数/成本建模（由调用方处理）
 - 中英文文档保持信息等价；翻译漂移由 CI 链接检查跟踪
 
