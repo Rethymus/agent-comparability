@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.5.8 (2026-10-30)
 
 - Frozen-corpus content address (`case_set_digest`) + repo↔packaged twin
   identity gate. Gap (verified in-tree): `spec/cdr.schema.json` and
